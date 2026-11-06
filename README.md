@@ -14,13 +14,11 @@ Reported gameplay FPS on **Verdant Falls** with the settings below.
 
 | Resolution | MacBook Air 2020 (M1, 8 GB) | MacBook Pro 16-inch (M5 Pro, 24 GB) |
 | --- | --- | --- |
-| 3456 × 2168 | — | 140–150 FPS |
+| 3456 × 2168 | Not supported | 140–150 FPS |
 | 2560 × 1600 | 45–48 FPS | 180–200 FPS |
 | 1920 × 1200 | Not supported | 280–300 FPS |
 | 1440 × 900 | 90–105 FPS | Coming soon |
 | 1280 × 800 | 100–120 FPS | Coming soon |
-
-The dash marks a resolution with no reported measurement.
 
 <details>
 <summary>Graphics settings used for the measurements</summary>
@@ -100,16 +98,3 @@ bash build.sh --game "$GAME" --private "$PRIVATE" \
 The output path must be new. The build selects the architecture automatically. For explicit packaging, pass `--arch arm64` or `--arch x86_64`. `--dotnet /path/to/dotnet` selects an installed SDK. `--wwiser /path/to/wwiser` enables local bank conversion. `--unity-support` and `--wwise` select the official native inputs from non-default locations.
 
 Open the resulting `.app` in Finder. On startup, the app writes Unity and launcher logs to `~/Library/Logs/Risk Of Rain 2/`. The `Latest-Unity.log` and `Latest-Launcher.log` links point to the latest run. Configuration, mod lists, run reports and generated caches use `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.
-
-## Publishing
-
-Publish only the repository text files. Keep the Windows game, Unity and Wwise SDKs, private input kit, original icon, compiled shaders, build outputs and logs outside Git. The license covers Risk2Mac's original scripts and helpers. Risk2Mac is an independent project and uses the name Risk of Rain 2 to identify the supported game.
-
-After reviewing the staged files, commit them locally. Create an empty GitHub repository named `Risk2Mac`, set its URL, and push the `main` branch.
-
-```bash
-git diff --cached --stat
-git commit -m "Initial Risk2Mac builder"
-git remote add origin https://github.com/YOUR-NAME/Risk2Mac.git
-git push -u origin main
-```
