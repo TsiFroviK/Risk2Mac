@@ -1,5 +1,7 @@
 # Risk2Mac
 
+![Risk2Mac](docs/risk2mac-banner.png)
+
 [Русская инструкция](README.ru.md)
 
 Risk2Mac assembles a local macOS build of Risk of Rain 2 from a matching Windows installation and privately supplied compatibility inputs. It selects the native `arm64` or `x86_64` slices of Unity Mono and Wwise, copies the original data, adjusts Addressables paths, and installs the locally prepared Metal assets. It compiles the compatibility helpers, applies the managed patches for storage and input, and signs the resulting `.app` locally. The game stores mutable settings outside its signed application bundle.
