@@ -12,8 +12,6 @@ Risk2Mac assembles a local macOS build of Risk of Rain 2 from a matching Windows
 
 Reported gameplay FPS on **Verdant Falls** with the settings below.
 
-![Gameplay on Verdant Falls](docs/verdant-falls-performance.png)
-
 | Resolution | MacBook Air 2020 (M1, 8 GB) | MacBook Pro 16-inch (M5 Pro, 24 GB) |
 | --- | --- | --- |
 | 3456 × 2168 | Not supported | 140–150 FPS |
@@ -44,6 +42,10 @@ Reported gameplay FPS on **Verdant Falls** with the settings below.
 | Max Corpses | 25 |
 
 </details>
+
+![Gameplay on Siphoned Forest](docs/siphoned-forest-gameplay.png)
+
+*Gameplay on Siphoned Forest.*
 
 ## Requirements
 
