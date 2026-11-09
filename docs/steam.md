@@ -27,6 +27,8 @@ The output directory must support Unix permissions and the `.app` path must be n
 
 Install the native Steam client normally, sign in to an account that owns Risk of Rain 2, and leave Steam running. Open the generated `.app` in Finder. The port loads Valve-signed libraries from `~/Library/Application Support/Steam/Steam.AppBundle/`. Keep the Steam client up to date.
 
+The launcher also loads Steam's installed overlay before the Metal device is created. Shift+Tab opens it when the overlay is enabled in Steam settings. The launcher verifies Valve's signature for the current Mac architecture; it continues without the overlay if Steam is closed or the renderer is missing or fails verification. Forced local mode skips overlay loading. No Valve overlay binaries are included in the repository or generated app. This early-loading fix was verified on Apple Silicon; Intel overlay behavior still needs hardware testing. [Steam overlay requirements](https://partner.steamgames.com/doc/features/overlay)
+
 Steam mode uses the game's Steam account and cloud profile path. The local profile remains in its separate local storage. Switching modes selects the corresponding profiles without merging their progress. DLC availability follows Steam ownership and the expansion content included in the build.
 
 When Steam initialization, account access or required interface checks fail, the app automatically selects local mode during startup. To explicitly launch in local mode for troubleshooting, run the bundle launcher with `RISK2MAC_FORCE_LOCAL=1`.
