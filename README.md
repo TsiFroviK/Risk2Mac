@@ -6,7 +6,11 @@
 
 Risk2Mac assembles a local macOS build of Risk of Rain 2 from a matching Windows installation and privately supplied compatibility inputs. It selects the native `arm64` or `x86_64` slices of Unity Mono and Wwise, copies the original data, adjusts Addressables paths, and installs the locally prepared Metal assets. It compiles the compatibility helpers, applies the managed patches for storage and input, and signs the resulting `.app` locally. The game stores mutable settings outside its signed application bundle.
 
-**Build status.** This recipe targets the specific 1.5.0 data profile in the manifests. It requires the private preparation described below. The public recipe cannot recreate all Metal bundles, the recovered startup data or the early managed patches from a stock Windows install. It builds the existing solo port. Intel packaging is supported, while gameplay on Intel hardware still needs verification.
+**Build status.** This recipe targets the specific 1.5.0 data profile in the manifests. It requires the private preparation described below. The public recipe cannot recreate all Metal bundles, the recovered startup data or the early managed patches from a stock Windows install. The default build uses local profiles. An optional `--steam` build adds Steam integration. Intel packaging is supported, while gameplay on Intel hardware still needs verification.
+
+## Steam integration
+
+The optional build uses the installed Steam client for game presence, owned DLC and Steam cloud profiles, with automatic local mode when Steam is unavailable. See [Steam setup and current multiplayer limitations](docs/steam.md) for the extra preparation and build commands. No Steam client libraries or game content are included in this repository.
 
 ## Performance
 

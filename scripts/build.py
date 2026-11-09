@@ -125,6 +125,7 @@ def main():
     parser.add_argument("--wwiser", type=Path, help="Local wwiser checkout for sound bank conversion")
     parser.add_argument("--unity-support", type=Path, help="Official Unity 2023.1.0f1 MacStandaloneSupport directory")
     parser.add_argument("--wwise", type=Path, help="Official Wwise 2024.1.18 macOS integration archive or directory")
+    parser.add_argument("--steam", action="store_true", help="Enable Steam integration using the Steam client installed on the destination Mac")
     options = parser.parse_args()
     host = host_architecture()
     arch = options.arch or host
@@ -160,6 +161,8 @@ def main():
         for flag, path in (("--unity-support", options.unity_support), ("--wwise", options.wwise)):
             if path:
                 native_args.extend((flag, str(path.expanduser().resolve())))
+        if options.steam:
+            native_args.append("--steam")
         run("/bin/bash", str(ROOT / "scripts/build-native.sh"), *common, "--arch", arch, *native_args)
         print("[2/4] Game data", flush=True)
         extra = ["--wwiser", str(options.wwiser.expanduser().resolve())] if options.wwiser else []
@@ -169,7 +172,8 @@ def main():
         environment = dict(os.environ, DOTNET_NOLOGO="1", DOTNET_CLI_TELEMETRY_OPTOUT="1",
                            DOTNET_GENERATE_ASPNET_CERTIFICATE="false", DOTNET_ADD_GLOBAL_TOOLS_TO_PATH="false",
                            DOTNET_CLI_HOME=str(cache / "dotnet-home"), NUGET_PACKAGES=str(cache / "nuget"))
-        subprocess.run([sys.executable, str(ROOT / "scripts/build-managed.py"), *common, "--dotnet", dotnet],
+        managed_args = ["--steam"] if options.steam else []
+        subprocess.run([sys.executable, str(ROOT / "scripts/build-managed.py"), *common, "--dotnet", dotnet, *managed_args],
                        check=True, env=environment)
         print("[4/4] App bundle and signature", flush=True)
         assemble_metadata(app, game)

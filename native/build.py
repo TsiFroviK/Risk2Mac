@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import json
 import os
 import platform
 import plistlib
@@ -152,6 +153,36 @@ def copy_slice(source, destination, arch):
         raise ValueError(f"Failed to select {arch} in {destination}")
 
 
+def build_steam(private, work, staging, arch):
+    sources = Path(__file__).parent
+    headers = require_tree(private / "native/steam-legacy-headers")
+    manifest = json.loads(require_file(sources / "steam-legacy-headers.json").read_text(encoding="utf-8"))
+    if not manifest or {path.name for path in headers.glob("*.h")} != set(manifest):
+        raise ValueError("Steam legacy header inventory does not match this release")
+    for name, expected in manifest.items():
+        if Path(name).name != name:
+            raise ValueError(f"Invalid Steam header manifest entry: {name}")
+        header = require_file(headers / name)
+        if sha256(header) != expected:
+            raise ValueError(f"Unsupported Steam legacy header: {header}")
+    generated = work / "SteamLegacyWrappers.cpp"
+    subprocess.run([sys.executable, str(require_file(sources / "generate-steam-legacy.py")),
+                    "--sdk", str(headers), "--output", str(generated)], check=True)
+    bridge = work / "steam-bridge.o"
+    common = ["/usr/bin/xcrun", "--sdk", "macosx"]
+    target = ["-arch", arch, "-mmacosx-version-min=11.0"]
+    subprocess.run([*common, "clang", *target, "-Wall", "-Wextra", "-Werror", "-c",
+                    str(require_file(sources / "Risk2MacSteamBridge.c")), "-o", str(bridge)], check=True)
+    library = staging / "Plugins/libRisk2MacSteamBridge.dylib"
+    subprocess.run([*common, "clang++", *target, "-std=c++11", "-fvisibility=default", "-I", str(headers),
+                    "-dynamiclib", str(bridge), str(generated), str(require_file(sources / "SteamLegacyServer.cpp")),
+                    "-framework", "Foundation", "-framework", "CoreFoundation", "-framework", "Security",
+                    "-install_name", "@rpath/libRisk2MacSteamBridge.dylib", "-o", str(library)], check=True)
+    library.chmod(0o755)
+    if architectures(library) != [arch]:
+        raise ValueError(f"Steam bridge has the wrong architecture: {library}")
+
+
 def build(args):
     if platform.system() != "Darwin":
         raise ValueError("The native stage requires macOS and the Xcode Command Line Tools.")
@@ -195,6 +226,9 @@ def build(args):
         if architectures(dpad) != [args.arch]:
             raise ValueError(f"D-pad bridge has the wrong architecture: {dpad}")
 
+        if args.steam:
+            build_steam(private, work, staging, args.arch)
+
         # Native parts are disjoint from Resources/Data and the launcher. Check all
         # destinations before moving anything out of the temporary build directory.
         outputs = [
@@ -206,6 +240,8 @@ def build(args):
             Path("Plugins") / WWISE_BUNDLE,
             Path("Plugins/libRoR2MacDpad.dylib"),
         ]
+        if args.steam:
+            outputs.append(Path("Plugins/libRisk2MacSteamBridge.dylib"))
         for relative in outputs:
             target = contents / relative
             if target.exists() or target.is_symlink():
@@ -257,6 +293,7 @@ def main():
     build_parser.add_argument("--arch", required=True, choices=("arm64", "x86_64"))
     build_parser.add_argument("--unity-support", type=Path)
     build_parser.add_argument("--wwise", type=Path)
+    build_parser.add_argument("--steam", action="store_true")
     build_parser.set_defaults(run=build)
     export_parser = commands.add_parser("export-private")
     export_parser.add_argument("--port-app", required=True, type=Path)

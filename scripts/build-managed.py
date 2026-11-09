@@ -195,9 +195,37 @@ def install(args):
     with tempfile.TemporaryDirectory(prefix="risk2mac-managed-", dir=app.parent) as directory:
         scratch = Path(directory)
         output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise)
+        if args.steam:
+            install_steam(output, scratch, dotnet)
         managed.parent.mkdir(parents=True, exist_ok=True)
         output.rename(managed)
-    print(f"Prepared {len(recipe['files'])} Mono assemblies")
+    print(f"Prepared {len(recipe['files']) + int(args.steam)} Mono assemblies")
+
+
+def install_steam(managed, scratch, dotnet):
+    csc, sdk = locate_csc(dotnet)
+    helper = scratch / "Risk2Mac.Steam.dll"
+    references = (*RUNTIME_REFS, "netstandard.dll", "UnityEngine.CoreModule.dll",
+                  "UnityEngine.UNETModule.dll", "com.unity.multiplayer-hlapi.Runtime.dll",
+                  "RoR2Arm64.ManagedSolo.dll", "RoR2.dll", "Facepunch.Steamworks.dll")
+    compile_dll(dotnet, csc, [managed / name for name in references],
+                [SOURCE / "steam" / name for name in ("SteamCompatibility.cs", "SteamExternalTransport.cs")], helper)
+    patched = scratch / "steam-patched"
+    run_patcher(dotnet, sdk, "steam", scratch, managed, helper, patched)
+    report = json.loads((patched / "patch-report.json").read_text(encoding="utf-8"))
+    expected = {"RoR2.dll", "RoR2Arm64.OfflinePlatform.dll", "RoR2Arm64.ManagedSolo.dll", "Facepunch.Steamworks.dll"}
+    if len(report) != len(expected) or {item["file"] for item in report} != expected:
+        raise ValueError("Steam patch report has an unexpected assembly inventory")
+    if {path.name for path in patched.iterdir()} != expected | {helper.name, "patch-report.json"}:
+        raise ValueError("Steam patch output has an unexpected file inventory")
+    for item in report:
+        name = item["file"]
+        assert_file(managed / name, item["sourceSha256"])
+        assert_file(patched / name, item["candidateSha256"])
+    assert_file(patched / helper.name, sha256(helper))
+    for name in sorted(expected | {helper.name}):
+        (patched / name).replace(managed / name)
+    print("Prepared Steam integration with verified managed patches")
 
 
 def main():
@@ -207,6 +235,7 @@ def main():
     parser.add_argument("--private", type=Path, required=True)
     parser.add_argument("--dotnet", default="dotnet")
     parser.add_argument("--check-inputs", action="store_true")
+    parser.add_argument("--steam", action="store_true")
     args = parser.parse_args()
     if not args.check_inputs and args.app is None:
         parser.error("--app is required unless --check-inputs is used")
