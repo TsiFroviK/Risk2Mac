@@ -76,11 +76,13 @@ python3 scripts/build-managed-inputs.py --port-app "$PORT" --pre-storage "$PRE_S
 bash scripts/build-native-inputs.sh --port-app "$PORT" --private "$PRIVATE"
 ```
 
-From a matching Windows installation, `build.sh` can generate three startup files, convert 247 sound banks, prepare 50 managed DLLs and rebuild 83 Addressables shader bundles. It can download the official Unity Mac Mono component into its cache. That component supplies 70 verified DLLs, and the full Unity editor provides up to 22 more. The compute and depth-copy shaders need an activated Unity Editor when generated locally. The remaining game assets and adapted assemblies are listed in the input guides above.
+From a matching Windows installation, `build.sh` can generate startup data, convert 247 sound banks, prepare managed DLLs and rebuild 83 Addressables shader bundles. It can download the official Unity Mac Mono component into its cache. The complete Unity Editor supplies the Mono profile and generates the stock splash, startup textures and Metal shaders when needed. The builder finds Wwise offline archives exported into Downloads and verifies them before use. See the input guides above for the remaining prepared files.
 
 ## Build
 
 Use **Risk2Mac Builder** for a graphical setup. Download the universal macOS disk image from [Releases](https://github.com/TsiFroviK/Risk2Mac/releases), drag the builder into Applications, then select the Windows game folder and the remaining prerequisites under **Local port files**. The app runs the same conversions and input checks as `build.sh`. Use **Advanced inputs** to select custom paths for Unity Editor, Mac Build Support, Wwise, wwiser, a .NET SDK or the tool cache. Install Xcode Command Line Tools before building.
+
+The **Set up Unity** and **Set up Wwise** buttons open the vendors’ own setup and sign-in flows. Use `bash build.sh --setup unity` or `bash build.sh --setup wwise` to do the same from Terminal. [SDK setup instructions](native/README.md)
 
 The Builder checks for its own updates automatically. Choose **Update** to download the DMG, install the new Builder in its current folder, and restart it. **Later** postpones the update. **Don't remind me** turns off automatic checks, which you can re-enable in **Settings**.
 

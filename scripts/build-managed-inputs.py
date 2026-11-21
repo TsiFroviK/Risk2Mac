@@ -31,7 +31,7 @@ def export(args):
             expected = entry["input_sha256"]
         elif entry["source"] in ("private", "wwise"):
             source = source_dir / name
-            expected = entry["sha256"]
+            expected = builder["accepted_input_hashes"](entry)
         else:
             continue
         builder["assert_file"](source, expected)

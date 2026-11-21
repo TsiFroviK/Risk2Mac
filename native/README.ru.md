@@ -4,6 +4,15 @@
 
 Risk2Mac использует macOS Mono Player из **Unity 2023.1.0f1** и плагин **Wwise Unity Integration 2024.1.18 Release** для macOS. Получите их по условиям поставщиков и храните в закрытой папке сборки за пределами Git.
 
+Нажмите **«Настроить Unity»** или **«Настроить Wwise»** в графическом сборщике. Из корня репозитория те же действия доступны командами ниже.
+
+```bash
+bash build.sh --setup unity
+bash build.sh --setup wwise
+```
+
+Войдите в Unity Hub, установите Unity 2023.1.0f1 и активируйте лицензию редактора. Если Hub недоступен, команда откроет страницу этой версии на сайте Unity. Активированный редактор используется для генерации штатной заставки Unity и компиляции шейдеров Metal. [Установка и вход в Unity Hub](https://docs.unity.com/en-us/hub/install-hub-win-mac)
+
 Скрипт находит стандартную установку Unity Hub в `/Applications/Unity/Hub/Editor/2023.1.0f1`. Если локального плеера или модуля нет, он скачивает официальный Mac Mono Build Support, проверяет SHA-256 и извлекает плеер и 70 подходящих DLL в кэш. Полный редактор предоставляет дополнительный профиль Mono для macOS и может скомпилировать шейдер копирования глубины. Для нестандартного расположения укажите `--unity-support` или поместите `MacStandaloneSupport` в `<private>/native/UnityMacSupport`. В модуле должны быть следующие компоненты.
 
 ```text
@@ -15,7 +24,7 @@ MacStandaloneSupport/
 
 Подойдёт и штатный Mono Player для одной архитектуры из варианта `macos_arm64_player_nondevelopment_mono` или `macos_x64_player_nondevelopment_mono`. [Архив версий Unity](https://unity.com/releases/editor/archive)
 
-Получите `Unity.Mac.tar.xz` через Audiokinetic Launcher или из доступной вам лицензионной загрузки интеграции. Поместите архив в `<private>/native/wwise/Unity.Mac.tar.xz`. Уже распакованный `AkUnitySoundEngine.bundle` из каталога Release того же архива можно поместить в `<private>/native/wwise/AkUnitySoundEngine.bundle`. Скрипт сверит контрольную сумму исполняемого файла перед выбором архитектуры. [Загрузки Audiokinetic](https://www.audiokinetic.com/en/download/)
+Войдите в Audiokinetic Launcher. В разделе **Unity → Offline Integration Files** выгрузите версию **2024.1.18** для macOS и Windows в «Загрузки». Основной сборщик находит `Unity.Mac.tar.xz` и `Unity.Windows.tar.xz`, сверяет SHA‑256 и извлекает нужные файлы во время сборки. Локальный архив или распакованную интеграцию также можно указать через `--wwise`. Готовые файлы в `<private>/native/wwise/` по-прежнему поддерживаются. [Загрузки Audiokinetic](https://www.audiokinetic.com/en/download/) · [Пример выгрузки offline-пакетов](https://www.youtube.com/watch?v=KvgcYpvOtWk&t=825s)
 
 Установите инструменты командной строки Xcode командой `xcode-select --install`. Скрипт выбирает нужную архитектуру в Unity и Wwise с помощью `lipo` и компилирует модуль крестовины из исходника Objective-C в репозитории. Для модуля задана минимальная версия macOS 11. Готовое приложение подписывает основной скрипт сборки. [Инструменты Apple](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools)
 

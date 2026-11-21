@@ -10,6 +10,17 @@ import shutil
 import subprocess
 import tempfile
 
+from risk2mac_depth import find_unity_editor
+from risk2mac_ai_navigation import (
+    OUTPUT_NAME as AI_NAVIGATION, OUTPUT_SHA256 as AI_NAVIGATION_SHA256,
+    REFERENCE_SHA256 as AI_NAVIGATION_REFERENCES,
+    build_ai_navigation, find_ai_navigation_analyzer,
+)
+from risk2mac_memory_profiler import (
+    OUTPUT_NAME as MEMORY_PROFILER, OUTPUT_SHA256 as MEMORY_PROFILER_SHA256,
+    REFERENCE_SHA256 as MEMORY_PROFILER_REFERENCES, build_memory_profiler,
+)
+
 
 SOURCE = Path(__file__).resolve().parents[1] / "managed"
 WINDOWS_DATA = "Risk of Rain 2_Data"
@@ -35,8 +46,16 @@ def assert_file(path, expected):
     if not path.is_file():
         raise ValueError(f"Missing input: {path}")
     actual = sha256(path)
-    if actual != expected:
-        raise ValueError(f"Unsupported input: {path}\nExpected SHA-256 {expected}\nFound {actual}")
+    allowed = (expected,) if isinstance(expected, str) else expected
+    if actual not in allowed:
+        raise ValueError(f"Unsupported input: {path}\nExpected SHA-256 {' or '.join(allowed)}\nFound {actual}")
+
+
+def accepted_input_hashes(entry):
+    baseline = entry.get("input_sha256", entry["sha256"])
+    if "generated_sha256" in entry:
+        return baseline, entry["generated_sha256"]
+    return (baseline,)
 
 
 def read_recipe():
@@ -49,7 +68,7 @@ def read_recipe():
     return recipe
 
 
-def unity_managed_directories(private, unity_support):
+def unity_managed_directories(private, unity_support, unity_editor=None):
     if unity_support is None:
         local = private / "native/UnityMacSupport"
         unity_support = local if local.is_dir() else UNITY_CONTENTS / UNITY_MAC_MODULE
@@ -60,14 +79,16 @@ def unity_managed_directories(private, unity_support):
     profiles = [unity_support / UNITY_MAC_MONO_PROFILE, UNITY_CONTENTS / UNITY_MAC_MONO_PROFILE]
     if editor is not None:
         profiles.insert(0, editor / UNITY_MAC_MONO_PROFILE)
+    if unity_editor is not None:
+        profiles.insert(0, unity_editor.parent.parent / UNITY_MAC_MONO_PROFILE)
     directories = [unity_support / "Variations/mono/Managed"]
     for profile in profiles:
         directories.extend((profile, profile / "Facades"))
     return tuple(dict.fromkeys(directories))
 
 
-def resolve_private_sources(private, recipe, unity_support=None):
-    directories = unity_managed_directories(private, unity_support)
+def resolve_private_sources(private, recipe, unity_support=None, unity_editor=None):
+    directories = unity_managed_directories(private, unity_support, unity_editor)
     sources = {}
     for name, entry in recipe["files"].items():
         if entry["source"] not in {"private", "storage"}:
@@ -106,7 +127,9 @@ def reemit_plan(recipe, private_sources):
     return plan
 
 
-def check_inputs(windows, private, recipe, private_sources, plan, compatibility):
+def check_inputs(windows, private, recipe, private_sources, plan, compatibility, wwise_directory=None,
+                 vendor_builds=None):
+    vendor_builds = vendor_builds or {}
     errors = []
 
     def check(path, expected):
@@ -118,10 +141,10 @@ def check_inputs(windows, private, recipe, private_sources, plan, compatibility)
     for name, expected in recipe["windows_anchors"].items():
         check(windows / name, expected)
 
-    wwise = private / "wwise"
+    wwise = wwise_directory or private / "wwise"
     wwise_sources = recipe["optional_wwise_sources"]
     compile_wwise = all((wwise / name).is_file() for name in wwise_sources)
-    if compile_wwise:
+    if compile_wwise or wwise_directory is not None:
         for name, expected in wwise_sources.items():
             check(wwise / name, expected)
 
@@ -129,7 +152,10 @@ def check_inputs(windows, private, recipe, private_sources, plan, compatibility)
                            for item in plan}
     windows_preparation.update({name: (name, digest) for name, digest in compatibility.items()})
     for name, entry in recipe["files"].items():
-        if name in windows_preparation:
+        if name in vendor_builds:
+            if entry.get("generated_sha256", entry["sha256"]) != vendor_builds[name]:
+                errors.append(f"The generator for {name} disagrees with the assembly manifest.")
+        elif name in windows_preparation:
             source_name, expected = windows_preparation[name]
             check(windows / source_name, expected)
         elif entry["source"] == "windows":
@@ -137,7 +163,7 @@ def check_inputs(windows, private, recipe, private_sources, plan, compatibility)
         elif entry["source"] == "storage":
             check(private_sources[name], entry["input_sha256"])
         elif entry["source"] == "private":
-            check(private_sources[name], entry["sha256"])
+            check(private_sources[name], accepted_input_hashes(entry))
         elif entry["source"] == "wwise" and not compile_wwise:
             check(private / "managed" / name, entry["sha256"])
     if errors:
@@ -189,7 +215,9 @@ def run_patcher(dotnet, sdk, name, scratch, *args):
     (scratch / f"{name}-patch.json").write_text(result.stdout, encoding="utf-8")
 
 
-def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan, compatibility):
+def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan, compatibility,
+                     wwise_directory=None, vendor_builds=None, editor=None):
+    vendor_builds = vendor_builds or {}
     csc, sdk = locate_csc(dotnet)
     output = scratch / "Managed"
     output.mkdir()
@@ -207,13 +235,23 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
                     generated, *compatibility)
         private_sources = {**private_sources, **{name: generated / name for name in compatibility}}
     for name, entry in recipe["files"].items():
+        if name in vendor_builds:
+            continue
         if entry["source"] == "windows":
             shutil.copyfile(windows / name, output / name)
         elif entry["source"] in {"private", "storage"}:
             shutil.copyfile(private_sources[name], output / name)
-            assert_file(output / name, entry.get("input_sha256", entry["sha256"]))
+            assert_file(output / name, accepted_input_hashes(entry))
         elif entry["source"] == "wwise" and not compile_wwise:
             shutil.copyfile(private / "managed" / name, output / name)
+
+    if AI_NAVIGATION in vendor_builds:
+        references = {name: output / name for name in AI_NAVIGATION_REFERENCES}
+        build_ai_navigation(dotnet, csc, editor, references, output / AI_NAVIGATION, scratch)
+    if MEMORY_PROFILER in vendor_builds:
+        references = {name: windows / name for name in MEMORY_PROFILER_REFERENCES}
+        references["UnityEngine.CoreModule.dll"] = output / "UnityEngine.CoreModule.dll"
+        build_memory_profiler(dotnet, csc, references, output / MEMORY_PROFILER, scratch)
 
     # Compile against the same Unity 2021 Windows reference assembly versions
     # used for the reviewed helpers. The app uses its supplied macOS Mono runtime.
@@ -242,7 +280,7 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
     if compile_wwise:
         wwise_refs = (*RUNTIME_REFS, "netstandard.dll", *UNITY_REFS,
                       "AK.Wwise.Unity.API.dll", "AK.Wwise.Unity.MonoBehaviour.dll")
-        sources = [private / "wwise" / name for name in recipe["optional_wwise_sources"]]
+        sources = [(wwise_directory or private / "wwise") / name for name in recipe["optional_wwise_sources"]]
         metadata = scratch / "Wwise2024.Mac.PInvokeMetadata.dll"
         compile_dll(dotnet, csc, [windows / name for name in wwise_refs], sources, metadata,
                     define="UNITY_STANDALONE_OSX")
@@ -253,7 +291,8 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
     inventory = {path.name: sha256(path) for path in output.iterdir()}
     if inventory.keys() != recipe["files"].keys():
         raise ValueError("Generated managed assembly inventory does not match this release")
-    different = [name for name, digest in inventory.items() if digest != recipe["files"][name]["sha256"]]
+    different = [name for name, digest in inventory.items()
+                 if digest not in (recipe["files"][name]["sha256"], recipe["files"][name].get("generated_sha256"))]
     if different:
         print(f"Build with .NET {sdk} re-emitted assemblies with different bytes: {', '.join(different)}")
     return output
@@ -267,11 +306,19 @@ def install(args):
     unity_support = args.unity_support.resolve(strict=True) if args.unity_support is not None else None
     if unity_support is not None and not unity_support.is_dir():
         raise ValueError(f"Expected a Unity MacStandaloneSupport directory: {unity_support}")
-    private_sources = resolve_private_sources(private, recipe, unity_support)
+    editor = find_unity_editor(args.unity_editor)
+    private_sources = resolve_private_sources(private, recipe, unity_support, editor)
     plan = reemit_plan(recipe, private_sources)
     compatibility = {name: digest for name, digest in recipe["compatibility"].items()
                      if needs_preparation(private_sources[name])}
-    compile_wwise = check_inputs(windows, private, recipe, private_sources, plan, compatibility)
+    wwise_directory = args.wwise_sources.expanduser().resolve(strict=True) if args.wwise_sources else None
+    vendor_builds = {}
+    if needs_preparation(private_sources[AI_NAVIGATION]) and find_ai_navigation_analyzer(editor):
+        vendor_builds[AI_NAVIGATION] = AI_NAVIGATION_SHA256
+    if needs_preparation(private_sources[MEMORY_PROFILER]):
+        vendor_builds[MEMORY_PROFILER] = MEMORY_PROFILER_SHA256
+    compile_wwise = check_inputs(windows, private, recipe, private_sources, plan, compatibility, wwise_directory,
+                                 vendor_builds)
     if args.check_inputs:
         print("Managed prerequisites match the release manifest")
         return
@@ -291,7 +338,7 @@ def install(args):
     with tempfile.TemporaryDirectory(prefix="risk2mac-managed-", dir=app.parent) as directory:
         scratch = Path(directory)
         output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise,
-                                  private_sources, plan, compatibility)
+                                  private_sources, plan, compatibility, wwise_directory, vendor_builds, editor)
         if args.steam:
             install_steam(output, scratch, dotnet)
         managed.parent.mkdir(parents=True, exist_ok=True)
@@ -331,6 +378,8 @@ def main():
     parser.add_argument("--app", type=Path)
     parser.add_argument("--private", type=Path, required=True)
     parser.add_argument("--unity-support", type=Path, help=f"Official Unity {UNITY_VERSION} MacStandaloneSupport directory")
+    parser.add_argument("--unity-editor", type=Path, help=f"Unity {UNITY_VERSION} Editor app or executable providing the Mono runtime profile")
+    parser.add_argument("--wwise-sources", type=Path, help="Directory with the verified official Wwise C# source pair")
     parser.add_argument("--dotnet", default="dotnet")
     parser.add_argument("--check-inputs", action="store_true")
     parser.add_argument("--steam", action="store_true")

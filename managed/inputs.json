@@ -259,6 +259,7 @@
     },
     "Unity.MemoryProfiler.dll": {
       "sha256": "4a32b9534f0fd1c489ce8e66c8a84df4814c81c45e19e54b02737fc73024d2c7",
+      "generated_sha256": "3f1f712c6b175ec154c7fd2e32770147b0a0b3886f8d819426c357f9cf5b4442",
       "source": "private"
     },
     "Unity.Postprocessing.Runtime.dll": {

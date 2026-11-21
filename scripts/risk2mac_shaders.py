@@ -18,15 +18,22 @@ def shader_recipes():
     return recipe["bundles"]
 
 
-def build_shader_bundles(game_data, stage, cache, bundles, editor=None):
-    compiler, cross = prepare_tools(cache)
+def prepare_asset_python(stage, cache):
     environment = stage / "ShaderPython"
+    python = environment / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python3")
+    if python.is_file():
+        return python
     subprocess.run([sys.executable, "-m", "venv", str(environment)], check=True)
-    python = environment / "bin/python3"
-    print("Preparing Python libraries for Unity shader conversion", flush=True)
+    print("Preparing Python libraries for Unity asset conversion", flush=True)
     subprocess.run([str(python), "-m", "pip", "--isolated", "--disable-pip-version-check",
                     "--cache-dir", str(cache / "pip"), "install", "--index-url", "https://pypi.org/simple",
                     "-r", str(CONVERTER / "requirements.txt")], check=True)
+    return python
+
+
+def build_shader_bundles(game_data, stage, cache, bundles, editor=None):
+    compiler, cross = prepare_tools(cache)
+    python = prepare_asset_python(stage, cache)
 
     output = stage / "ConvertedShaders"
     command = [str(python), "-u", str(CONVERTER / "build-shaders.py"),
@@ -34,8 +41,10 @@ def build_shader_bundles(game_data, stage, cache, bundles, editor=None):
                "--staging", str(stage), "--vkd3d-compiler", str(compiler), "--spirv-cross", str(cross)]
     if editor:
         donor = stage / "PostProcessing.bundle"
-        subprocess.run([sys.executable, "-u", str(CONVERTER / "prepare_compute.py"),
-                        "--editor", str(editor), "--output", str(donor)], check=True)
+        result = subprocess.run([sys.executable, "-u", str(CONVERTER / "prepare_compute.py"),
+                                 "--editor", str(editor), "--output", str(donor)])
+        if result.returncode:
+            raise ValueError("Unity could not prepare the compute shaders. Check the build log, Editor license and Mac Build Support (./build.sh --setup unity).")
         command.extend(("--compute-donor", str(donor)))
     for bundle in bundles:
         command.extend(("--bundle", bundle))

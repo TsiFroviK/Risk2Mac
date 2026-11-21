@@ -1,0 +1,66 @@
+{
+  "resources.assets.resS": {
+    "source": "resources.assets",
+    "needs_dotnet": false,
+    "inputs": {
+      "resources.assets": "01bb6b9564d8d64104e252fee10f6aed2a3e1cd8273860beb9024bbc2f0a8f0b",
+      "resources.assets.resS": "45335e0c1dd79f593d7c52a370a876f43e5635e859d4992ffb22d6fc92bcb668"
+    },
+    "size": 1419472,
+    "sha256": "844dabeb97a5a92b6fa4131d1ea631228586c9fb521ce1c3e0eed9dd7806bcfe",
+    "stream_fields": ["source_path_id", "output_offset", "size", "output_format", "mip_count", "sprite", "linear", "source_asset"],
+    "streams": [
+      [24, 0, 5460, null, 6, false],
+      [25, 5472, 5460, null, 6, false],
+      [37, 10944, 484, null, 1, false],
+      [41, 11440, 1424, 25, 7, false],
+      [36, 12864, 16, null, 1, false],
+      [32, 12880, 349552, 25, 10, false],
+      [38, 362432, 349552, 25, 10, false],
+      [35, 711984, 484, null, 1, false],
+      [27, 712480, 349552, 25, 10, false],
+      [40, 1062032, 400, 25, 1, true],
+      [26, 1062432, 4, 4, 1, true],
+      [31, 1062448, 484, null, 1, false],
+      [28, 1062944, 349552, 25, 10, false],
+      [42, 1412496, 64, 25, 1, true],
+      [34, 1412560, 1424, 25, 7, false],
+      [39, 1413984, 5488, 25, 7, false]
+    ]
+  },
+  "sharedassets0.assets.resS": {
+    "source": "sharedassets0.assets",
+    "needs_dotnet": true,
+    "inputs": {
+      "sharedassets0.assets": "3d735244606be616f3ce8ed90a644d04afc9ecbe44cdc9823fb2ed8b6c081f77",
+      "sharedassets0.assets.resS": "241ea021288d3a62c4e41d1dc8c7cabe91b15943b017927638f42e5be64459b8",
+      "level0": "86b614465595334d10d26d0e781daef8ebf43cf427b857c739e40c89251a44e2",
+      "level0.resS": "ccb4049cf09c76910c4de037d80f69657126d30cdcbf54c25edbd1ef2e3dcc4a"
+    },
+    "size": 2783968,
+    "sha256": "4b487f253291b5f75b6c075487d9f4d0d9f1de50aad8a54aae8f49bc0d60f33c",
+    "stream_fields": ["source_path_id", "output_offset", "size", "output_format", "mip_count", "sprite", "linear", "source_asset"],
+    "streams": [
+      [9, 0, 5460, null, 6, false],
+      [12, 5472, 4096, 25, 1, true],
+      [22, 9568, 349552, 25, 10, false],
+      [10, 359120, 14112, null, 1, false],
+      [11, 373232, 16384, 25, 1, true],
+      [13, 389616, 8192, 25, 1, true],
+      [21, 397808, 4096, 25, 1, true],
+      [26, 401904, 2112, null, 1, false],
+      [19, 404016, 32768, 25, 1, false],
+      [23, 436784, 1920, 25, 1, true],
+      [14, 438704, 65536, 25, 1, false, true],
+      [15, 504240, 14080, null, 1, false],
+      [17, 518320, 4096, 25, 1, true],
+      [16, 522416, 4096, 25, 1, false],
+      [28, 526512, 1048576, 25, 1, false, true],
+      [18, 1575088, 14400, null, 1, false],
+      [20, 1589488, 5488, 25, 7, true],
+      [24, 1594976, 9184, 25, 1, true],
+      [29, 1604160, 1048576, 25, 1, false, true],
+      [1, 2652736, 131232, 25, 8, false, true, "level0"]
+    ]
+  }
+}

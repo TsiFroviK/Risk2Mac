@@ -4,6 +4,15 @@
 
 Risk2Mac uses the macOS Mono player from **Unity 2023.1.0f1** and the **Wwise Unity Integration 2024.1.18 Release** macOS plugin. Obtain these inputs under your own vendor terms. Keep them in your private build directory outside the Git checkout.
 
+Choose **Set up Unity** or **Set up Wwise** in the graphical builder. From the repository root you can open the same setup flows with these commands.
+
+```bash
+bash build.sh --setup unity
+bash build.sh --setup wwise
+```
+
+Sign in through Unity Hub to install Unity 2023.1.0f1 and activate its Editor license. The setup action opens Unity's version page if the Hub is unavailable. The activated editor is used when the build needs to generate the stock Unity splash resource or compile the Metal shaders. [Unity Hub installation and sign-in](https://docs.unity.com/en-us/hub/install-hub-win-mac)
+
 The main builder detects a standard Unity Hub installation at `/Applications/Unity/Hub/Editor/2023.1.0f1`. With no local player or module, it fetches the official Mac Mono Build Support package, verifies its SHA-256 and extracts the player and 70 matching managed DLLs into the tool cache. The complete editor supplies the additional macOS Mono runtime profile and can compile the depth-copy shader. For a custom module location, use `--unity-support` or place its `MacStandaloneSupport` directory at `<private>/native/UnityMacSupport`. The module must contain these components.
 
 ```text
@@ -15,7 +24,7 @@ MacStandaloneSupport/
 
 The stage can also use the corresponding single-architecture non-development Mono variation, `macos_arm64_player_nondevelopment_mono` or `macos_x64_player_nondevelopment_mono`. See the [Unity Editor archive](https://unity.com/releases/editor/archive).
 
-Get the matching `Unity.Mac.tar.xz` using your Audiokinetic Launcher installation or your licensed integration download. Put it at `<private>/native/wwise/Unity.Mac.tar.xz`. A previously extracted Release `AkUnitySoundEngine.bundle` from the same archive can go at `<private>/native/wwise/AkUnitySoundEngine.bundle`. The stage verifies the known Release executable hash before selecting a slice. See [Audiokinetic downloads](https://www.audiokinetic.com/en/download/).
+Sign in through Audiokinetic Launcher. Under **Unity → Offline Integration Files**, export version **2024.1.18** for macOS and Windows into Downloads. The main builder detects `Unity.Mac.tar.xz` and `Unity.Windows.tar.xz`, verifies their hashes and extracts the required files during the build. A local archive or extracted integration can also be selected with `--wwise`. Previously prepared files under `<private>/native/wwise/` remain supported. [Audiokinetic downloads](https://www.audiokinetic.com/en/download/) · [Offline integration walkthrough](https://www.youtube.com/watch?v=KvgcYpvOtWk&t=825s)
 
 Run `xcode-select --install` if the Xcode Command Line Tools are missing. The stage uses `lipo` to select the requested architecture in each Unity and Wwise binary and builds the D-pad bridge from the Objective-C source in this repository. The bridge is built with a macOS 11 deployment target. The final assembly stage signs the complete application. See [Apple command-line tools installation](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools).
 

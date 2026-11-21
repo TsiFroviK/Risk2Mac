@@ -26,6 +26,21 @@ private func tr(_ en: String, _ ru: String) -> String {
     return Locale(identifier: preferred).languageCode == "ru" ? ru : en
 }
 
+private enum VendorSDK: String {
+    case unity, wwise
+
+    var instructions: String {
+        switch self {
+        case .unity:
+            return tr("Sign in to Unity Hub and activate a license for Editor 2023.1.0f1. Then try Build again.",
+                      "Войдите в Unity Hub, установите редактор 2023.1.0f1 и активируйте лицензию. Затем повторите сборку.")
+        case .wwise:
+            return tr("Sign in to Audiokinetic Launcher. In Unity → Offline Integration Files, export 2024.1.18 for macOS and Windows to Downloads, then try Build again.",
+                      "Войдите в Audiokinetic Launcher. В Unity → Offline Integration Files выгрузите 2024.1.18 для macOS и Windows в «Загрузки», затем повторите сборку.")
+        }
+    }
+}
+
 private struct BuilderView: View {
     @ObservedObject var build: BuildModel
     @ObservedObject var updates: BuilderUpdates
@@ -103,6 +118,18 @@ private struct BuilderView: View {
                                     canCreateDirectories: true)
                         }
                         Divider()
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(tr("SDK setup", "Настройка SDK"))
+                                .font(.callout).fontWeight(.medium)
+                            HStack {
+                                Button(tr("Set up Unity", "Настроить Unity")) {
+                                    build.openSetup(.unity, unityEditor: unityEditor)
+                                }
+                                Button(tr("Set up Wwise", "Настроить Wwise")) {
+                                    build.openSetup(.wwise)
+                                }
+                            }
+                        }
                         DisclosureGroup(tr("Advanced inputs", "Дополнительные параметры"), isExpanded: $advanced) {
                             VStack(alignment: .leading, spacing: 12) {
                                 PathRow(title: "Unity 2023.1.0f1 MacStandaloneSupport", path: $unity)
@@ -478,6 +505,33 @@ private final class BuildModel: ObservableObject {
     @Published private(set) var builtApp: URL?
     @Published private(set) var needsSteamShortcut = false
 
+    func openSetup(_ sdk: VendorSDK, unityEditor: String = "") {
+        guard !running, let recipe = Bundle.main.resourceURL?.appendingPathComponent("Recipe") else { return }
+        running = true
+        failed = false
+        progress = nil
+        status = tr("Opening the official setup…", "Открываем официальный установщик…")
+        var args = ["-u", "scripts/build.py", "--setup", sdk.rawValue]
+        args.appendPath("--unity-editor", unityEditor)
+        let arguments = args
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                try self.run("/usr/bin/python3", arguments, recipe: recipe, journal: .nullDevice) { _ in }
+                DispatchQueue.main.async {
+                    self.running = false
+                    self.status = sdk.instructions
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.running = false
+                    self.failed = true
+                    self.status = tr("Could not open the official setup. Check that the launcher is installed and try again.",
+                                     "Не удалось открыть установщик. Проверьте установку лаунчера и повторите попытку.")
+                }
+            }
+        }
+    }
+
     func start(arguments: [String], steam: Bool, prerequisites: String, output: URL?) {
         guard !running, let recipe = Bundle.main.resourceURL?.appendingPathComponent("Recipe") else { return }
         running = true
@@ -576,11 +630,13 @@ private final class BuildModel: ObservableObject {
 
     private func localizedFailure(_ error: Error) -> String {
         let detail = error.localizedDescription
+        if detail.contains("--setup unity") { return VendorSDK.unity.instructions }
+        if detail.contains("--setup wwise") { return VendorSDK.wwise.instructions }
         if detail.contains("Quit Steam") {
             return tr("Quit Steam and try adding the shortcut again.",
                       "Закройте Steam и повторите добавление ярлыка.")
         }
-        if detail.hasPrefix("Risk2Mac:") || detail.hasPrefix("Risk2Mac Steam") {
+        if detail.hasPrefix("Risk2Mac") {
             return tr(detail, "Сборщик не смог завершить действие. Причина указана в журнале.")
         }
         return detail
@@ -606,7 +662,7 @@ private final class BuildModel: ObservableObject {
         var detail: String?
         func line(_ bytes: Data) {
             let value = String(decoding: bytes, as: UTF8.self).trimmed
-            if value.hasPrefix("Risk2Mac:") || value.hasPrefix("Risk2Mac Steam") {
+            if value.hasPrefix("Risk2Mac"), detail?.contains("--setup ") != true {
                 detail = value
             }
             onLine(value)

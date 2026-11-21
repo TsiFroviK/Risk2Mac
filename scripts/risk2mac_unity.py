@@ -14,6 +14,8 @@ import tempfile
 
 VERSION = "2023.1.0f1"
 REVISION = "a008fa768e6c"
+EDITOR_RELEASE_URL = f"https://unity.com/releases/editor/whats-new/{VERSION}"
+HUB_INSTALL_URL = f"unityhub://{VERSION}/{REVISION}"
 PACKAGE_URL = (
     f"https://download.unity3d.com/download_unity/{REVISION}/MacEditorTargetInstaller/"
     f"UnitySetup-Mac-Mono-Support-for-Editor-{VERSION}.pkg"
@@ -39,6 +41,17 @@ MANAGED_DIRECTORIES = (
     Path("MonoBleedingEdge/lib/mono/unityjit-macos"),
     Path("MonoBleedingEdge/lib/mono/unityjit-macos/Facades"),
 )
+
+
+def open_unity_setup(editor_installed: bool) -> None:
+    """Open Unity's own installer or license manager via Launch Services."""
+    if sys.platform != "darwin":
+        raise ValueError("Open Unity SDK setup on macOS.")
+    target = ["-a", "Unity Hub"] if editor_installed else [HUB_INSTALL_URL]
+    result = subprocess.run(["/usr/bin/open", *target], capture_output=True)
+    if result.returncode:
+        subprocess.run(["/usr/bin/open", EDITOR_RELEASE_URL], check=True)
+    print(f"Sign in to Unity Hub, install Unity {VERSION} if needed, and activate your Editor license. Then retry the build.")
 
 
 def sha256(path: Path) -> str:
