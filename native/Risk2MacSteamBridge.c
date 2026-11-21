@@ -101,15 +101,18 @@ int Risk2MacSteamInitialize(void)
     void *(*apps_interface)(void) = (void *(*)(void))dlsym(steam_api, "SteamAPI_SteamApps_v009");
     if (!apps_interface)
         apps_interface = (void *(*)(void))dlsym(steam_api, "SteamAPI_SteamApps_v008");
-    void *(*user_interface)(void) = (void *(*)(void))dlsym(steam_api, "SteamAPI_SteamUser_v023");
-    if (!user_interface)
-        user_interface = (void *(*)(void))dlsym(steam_api, "SteamAPI_SteamUser_v022");
-    if (!user_interface)
-        user_interface = (void *(*)(void))dlsym(steam_api, "SteamAPI_SteamUser_v021");
+    const char *user_getters[] = {
+        "SteamAPI_SteamUser_v024", "SteamAPI_SteamUser_v023",
+        "SteamAPI_SteamUser_v022", "SteamAPI_SteamUser_v021",
+    };
+    void *user = NULL;
+    for (size_t i = 0; !user && i < sizeof(user_getters) / sizeof(user_getters[0]); ++i) {
+        void *(*user_interface)(void) = (void *(*)(void))dlsym(steam_api, user_getters[i]);
+        if (user_interface) user = user_interface();
+    }
     bool (*subscribed)(void *, uint32_t) = (bool (*)(void *, uint32_t))dlsym(steam_api, "SteamAPI_ISteamApps_BIsSubscribedApp");
     bool (*logged_on)(void *) = (bool (*)(void *))dlsym(steam_api, "SteamAPI_ISteamUser_BLoggedOn");
     void *apps = apps_interface ? apps_interface() : NULL;
-    void *user = user_interface ? user_interface() : NULL;
     if (apps && user && subscribed && logged_on && subscribed(apps, app_id) && logged_on(user) &&
         Risk2MacSteamCheckLegacyInterfaces()) {
         available = 1;
