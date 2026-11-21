@@ -35,6 +35,7 @@ private struct BuilderView: View {
     @AppStorage("steam") private var steam = true
     @AppStorage("steamLibrary") private var steamLibrary = ""
     @AppStorage("unity") private var unity = ""
+    @AppStorage("unityEditor") private var unityEditor = ""
     @AppStorage("wwise") private var wwise = ""
     @AppStorage("wwiser") private var wwiser = ""
     @AppStorage("dotnet") private var dotnet = ""
@@ -105,6 +106,7 @@ private struct BuilderView: View {
                         DisclosureGroup(tr("Advanced inputs", "Дополнительные параметры"), isExpanded: $advanced) {
                             VStack(alignment: .leading, spacing: 12) {
                                 PathRow(title: "Unity 2023.1.0f1 MacStandaloneSupport", path: $unity)
+                                PathRow(title: "Unity Editor 2023.1.0f1", path: $unityEditor, selection: .either)
                                 PathRow(title: "Wwise 2024.1.18", path: $wwise, selection: .either)
                                 PathRow(title: "wwiser", path: $wwiser,
                                         hint: tr("Downloaded when needed", "Скачивается при необходимости"))
@@ -185,6 +187,7 @@ private struct BuilderView: View {
             output = app
         }
         arguments.appendPath("--unity-support", unity)
+        arguments.appendPath("--unity-editor", unityEditor)
         arguments.appendPath("--wwise", wwise)
         arguments.appendPath("--wwiser", wwiser)
         arguments.appendPath("--dotnet", dotnet)

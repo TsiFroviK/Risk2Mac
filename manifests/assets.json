@@ -1,7 +1,7 @@
 {"format":1,"files":[
 {"path":"Resources/unity_builtin_extra","sha256":"e2227b2affa5d251dd8eb8ff3cdf240d5d616e964bd6ee4182323823aead749d","bytes":409224,"kind":"private"},
 {"path":"RuntimeInitializeOnLoads.json","sha256":"57eccb4dc1b1376f7306987c7e1c46f10d87e8776560f13fbdeea08d0d3f376c","bytes":4614,"kind":"startup","input_sha256":"eaa5a6c96faf9bcf30779c0998096037aee470e593013d5cac14f7983c4c7370"},
-{"path":"ScriptingAssemblies.json","sha256":"9057034da4d94cf0a98fbf79525113882cb830058752b4fd1cb23f8f257f880a","bytes":4425,"kind":"private"},
+{"path":"ScriptingAssemblies.json","sha256":"9057034da4d94cf0a98fbf79525113882cb830058752b4fd1cb23f8f257f880a","bytes":4425,"kind":"startup","input_sha256":"db7a7bcfe11c6b19ae9956fb4a887340061ea640d36932f823b8beb1577c0eae"},
 {"path":"StreamingAssets/Audio/GeneratedSoundBanks/Windows/Boss_ArtifactShell.bnk","sha256":"c48c8e66da51b2b31addd6d2241c101bc3d689cda113c98822db2de451ab5e95","bytes":1075283,"kind":"bank","input_sha256":"545f5c1b42b3adb689f0aa5f36d11a3b64698bf6eaf697d9dbe70d1a162693fe"},
 {"path":"StreamingAssets/Audio/GeneratedSoundBanks/Windows/Boss_ArtifactShell.txt","sha256":"ba5b9d217b829dcfdade29de04806fd3377efdfd1b41d61869d78c409c42c8fa","bytes":7368,"kind":"copy"},
 {"path":"StreamingAssets/Audio/GeneratedSoundBanks/Windows/Boss_Brother.bnk","sha256":"f8981e3d879c8206488858067ed8ba6c750733bce27acc74367f39da953a25c8","bytes":4259562,"kind":"bank","input_sha256":"dc635f9c813d37951adf21af41ff97f9a4d138744ad46f44e1ff76624a396114"},
@@ -763,7 +763,7 @@
 {"path":"StreamingAssets/LanguageOverrides/sony/pt-BR/platformOutputs.json","sha256":"8381df0b7425fac5d6bec0ac0eb8be1b6e33bb203ba313a43b78b625ef1ea2df","bytes":3431,"kind":"copy"},
 {"path":"StreamingAssets/LanguageOverrides/sony/tr/platformOutputs.json","sha256":"0c2f8c64dedc6aaba6c0d1b792916d967cfad8d7be3e5856f749f9f2e412204d","bytes":3566,"kind":"copy"},
 {"path":"StreamingAssets/LanguageOverrides/sony/zh-CN/platformOutputs.json","sha256":"c8f8da64897252aea2b6f669496dcd3c7a0ad30938fefa53756fd5a4f89624a7","bytes":3125,"kind":"copy"},
-{"path":"StreamingAssets/RoR2Mac/depth-copy.bundle","sha256":"ec9c1c52b598312c9453f979795aa9791c715a3f84ac4e22cb535525a43cd7b9","bytes":6985,"kind":"private"},
+{"path":"StreamingAssets/RoR2Mac/depth-copy.bundle","sha256":"ec9c1c52b598312c9453f979795aa9791c715a3f84ac4e22cb535525a43cd7b9","bytes":6985,"kind":"depth-copy"},
 {"path":"StreamingAssets/SaveIcon.png","sha256":"e5bec1ceb1c36404fa51a476599de646671e7cd1f520fc955626c899ccbf931f","bytes":47710,"kind":"copy"},
 {"path":"StreamingAssets/SearchableAttributeNames.txt","sha256":"ed62bb5f66815e6494e0e5a8a20e25794cd0b43dc272c36f558c29881228d1a7","bytes":23598,"kind":"copy"},
 {"path":"StreamingAssets/aa/AddressablesLink/link.xml","sha256":"6e495b09b9b3d7ef8f174ff2a24b109084680ad41c446cb0a4627302e3fe4e81","bytes":186273,"kind":"copy"},

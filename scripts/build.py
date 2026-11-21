@@ -13,6 +13,8 @@ import sys
 import tempfile
 
 from icon import install_icon
+from risk2mac_depth import EDITOR, find_unity_editor
+from risk2mac_unity import prepare_unity
 from steam_install import install_destination, print_shortcut_instructions, register_shortcut, steam_root
 
 
@@ -115,6 +117,21 @@ def assemble_metadata(app, game):
     )
 
 
+def unity_support_for_build(options, private, cache):
+    if options.unity_support:
+        return options.unity_support.expanduser().resolve()
+    if options.unity_editor:
+        editor = find_unity_editor(options.unity_editor)
+        support = editor.parent.parent / "PlaybackEngines/MacStandaloneSupport"
+        if support.is_dir():
+            return support
+    existing = (private / "native/unity", private / "native/UnityMacSupport",
+                EDITOR.parent.parent / "PlaybackEngines/MacStandaloneSupport")
+    if any(directory.is_dir() for directory in existing):
+        return None
+    return prepare_unity(cache)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game", required=True, type=Path, help="Windows game folder containing Risk of Rain 2_Data")
@@ -125,6 +142,7 @@ def main():
     parser.add_argument("--tools", type=Path, default=Path.home() / "Library/Caches/Risk2Mac", help="Local SDK download cache")
     parser.add_argument("--wwiser", type=Path, help="Local wwiser checkout for sound bank conversion")
     parser.add_argument("--unity-support", type=Path, help="Official Unity 2023.1.0f1 MacStandaloneSupport directory")
+    parser.add_argument("--unity-editor", type=Path, help="Unity 2023.1.0f1 app or executable for generating the depth-copy shader")
     parser.add_argument("--wwise", type=Path, help="Official Wwise 2024.1.18 macOS integration archive or directory")
     parser.add_argument("--steam", action="store_true", help="Enable Steam integration using the Steam client installed on the destination Mac")
     parser.add_argument("--steam-library", type=Path, help="Existing Steam library root (Steam Settings > Storage)")
@@ -169,8 +187,9 @@ def main():
         app.mkdir()
         common = ["--game", str(game), "--app", str(app), "--private", str(private)]
         print("[1/4] Native runtime", flush=True)
+        unity_support = unity_support_for_build(options, private, cache)
         native_args = []
-        for flag, path in (("--unity-support", options.unity_support), ("--wwise", options.wwise)):
+        for flag, path in (("--unity-support", unity_support), ("--wwise", options.wwise)):
             if path:
                 native_args.extend((flag, str(path.expanduser().resolve())))
         if options.steam:
@@ -178,6 +197,8 @@ def main():
         run("/bin/bash", str(ROOT / "scripts/build-native.sh"), *common, "--arch", arch, *native_args)
         print("[2/4] Game data", flush=True)
         extra = ["--wwiser", str(options.wwiser.expanduser().resolve())] if options.wwiser else []
+        if options.unity_editor:
+            extra.extend(("--unity-editor", str(options.unity_editor.expanduser().resolve())))
         run(sys.executable, str(ROOT / "scripts/build-assets.py"), *common, "--tools", str(cache), *extra)
         print("[3/4] Managed assemblies", flush=True)
         dotnet = dotnet_sdk(host, cache, options.dotnet.expanduser().resolve() if options.dotnet else None)
@@ -185,8 +206,8 @@ def main():
                            DOTNET_GENERATE_ASPNET_CERTIFICATE="false", DOTNET_ADD_GLOBAL_TOOLS_TO_PATH="false",
                            DOTNET_CLI_HOME=str(cache / "dotnet-home"), NUGET_PACKAGES=str(cache / "nuget"))
         managed_args = ["--steam"] if options.steam else []
-        if options.unity_support:
-            managed_args.extend(("--unity-support", str(options.unity_support.expanduser().resolve())))
+        if unity_support:
+            managed_args.extend(("--unity-support", str(unity_support)))
         subprocess.run([sys.executable, str(ROOT / "scripts/build-managed.py"), *common, "--dotnet", dotnet, *managed_args],
                        check=True, env=environment)
         print("[4/4] App bundle and signature", flush=True)

@@ -4,7 +4,7 @@
 
 Risk2Mac uses the macOS Mono player from **Unity 2023.1.0f1** and the **Wwise Unity Integration 2024.1.18 Release** macOS plugin. Obtain these inputs under your own vendor terms. Keep them in your private build directory outside the Git checkout.
 
-Install the exact Unity version and its macOS Mono build support through Unity Hub. A standard installation at `/Applications/Unity/Hub/Editor/2023.1.0f1` is detected automatically. For a different installation, place or link its `MacStandaloneSupport` directory at `<private>/native/UnityMacSupport`. The source directory must contain the following components.
+The main builder detects a standard Unity Hub installation at `/Applications/Unity/Hub/Editor/2023.1.0f1`. With no local player or module, it fetches the official Mac Mono Build Support package, verifies its SHA-256 and extracts the player and 70 matching managed DLLs into the tool cache. The complete editor supplies the additional macOS Mono runtime profile and can compile the depth-copy shader. For a custom module location, use `--unity-support` or place its `MacStandaloneSupport` directory at `<private>/native/UnityMacSupport`. The module must contain these components.
 
 ```text
 MacStandaloneSupport/

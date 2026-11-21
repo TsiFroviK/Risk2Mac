@@ -4,7 +4,7 @@
 
 Risk2Mac использует macOS Mono Player из **Unity 2023.1.0f1** и плагин **Wwise Unity Integration 2024.1.18 Release** для macOS. Получите их по условиям поставщиков и храните в закрытой папке сборки за пределами Git.
 
-Установите эту версию Unity и модуль сборки macOS Mono через Unity Hub. Скрипт найдёт стандартную установку в `/Applications/Unity/Hub/Editor/2023.1.0f1`. Для другого расположения поместите папку `MacStandaloneSupport` или ссылку на неё по пути `<private>/native/UnityMacSupport`. В ней должны быть следующие компоненты.
+Скрипт находит стандартную установку Unity Hub в `/Applications/Unity/Hub/Editor/2023.1.0f1`. Если локального плеера или модуля нет, он скачивает официальный Mac Mono Build Support, проверяет SHA-256 и извлекает плеер и 70 подходящих DLL в кэш. Полный редактор предоставляет дополнительный профиль Mono для macOS и может скомпилировать шейдер копирования глубины. Для нестандартного расположения укажите `--unity-support` или поместите `MacStandaloneSupport` в `<private>/native/UnityMacSupport`. В модуле должны быть следующие компоненты.
 
 ```text
 MacStandaloneSupport/

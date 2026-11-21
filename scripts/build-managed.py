@@ -20,6 +20,7 @@ UNITY_VERSION = "2023.1.0f1"
 UNITY_CONTENTS = Path("/Applications/Unity/Hub/Editor") / UNITY_VERSION / "Unity.app/Contents"
 UNITY_MAC_MODULE = Path("PlaybackEngines/MacStandaloneSupport")
 UNITY_MAC_MONO_PROFILE = Path("MonoBleedingEdge/lib/mono/unityjit-macos")
+UNSAFE_ASSEMBLY = "System.Runtime.CompilerServices.Unsafe.dll"
 
 
 def sha256(path):
@@ -43,6 +44,8 @@ def read_recipe():
     if recipe["schema"] != 1:
         raise ValueError("Unsupported managed input manifest")
     recipe["windows_reemit"] = json.loads((SOURCE / "reemit/inputs.json").read_text(encoding="utf-8"))
+    recipe["unsafe_reemit"] = json.loads((SOURCE / "reemit/unsafe.json").read_text(encoding="utf-8"))["input_sha256"]
+    recipe["compatibility"] = json.loads((SOURCE / "compat/inputs.json").read_text(encoding="utf-8"))["windows"]
     return recipe
 
 
@@ -79,19 +82,31 @@ def resolve_private_sources(private, recipe, unity_support=None):
     return sources
 
 
+def needs_preparation(path):
+    return not path.exists() and not path.is_symlink()
+
+
 def reemit_plan(recipe, private_sources):
-    return [
+    plan = [
         {
             "name": name,
             "inputSha256": expected,
             "outputSha256": recipe["files"][name].get("input_sha256", recipe["files"][name]["sha256"]),
         }
         for name, expected in recipe["windows_reemit"].items()
-        if not private_sources[name].exists() and not private_sources[name].is_symlink()
+        if needs_preparation(private_sources[name])
     ]
+    if needs_preparation(private_sources[UNSAFE_ASSEMBLY]):
+        plan.append({
+            "name": UNSAFE_ASSEMBLY,
+            "sourceName": "mscorlib.dll",
+            "inputSha256": recipe["unsafe_reemit"],
+            "outputSha256": recipe["files"][UNSAFE_ASSEMBLY]["sha256"],
+        })
+    return plan
 
 
-def check_inputs(windows, private, recipe, private_sources, plan):
+def check_inputs(windows, private, recipe, private_sources, plan, compatibility):
     errors = []
 
     def check(path, expected):
@@ -110,10 +125,13 @@ def check_inputs(windows, private, recipe, private_sources, plan):
         for name, expected in wwise_sources.items():
             check(wwise / name, expected)
 
-    reemitting = {item["name"]: item["inputSha256"] for item in plan}
+    windows_preparation = {item["name"]: (item.get("sourceName", item["name"]), item["inputSha256"])
+                           for item in plan}
+    windows_preparation.update({name: (name, digest) for name, digest in compatibility.items()})
     for name, entry in recipe["files"].items():
-        if name in reemitting:
-            check(windows / name, reemitting[name])
+        if name in windows_preparation:
+            source_name, expected = windows_preparation[name]
+            check(windows / source_name, expected)
         elif entry["source"] == "windows":
             check(windows / name, entry["sha256"])
         elif entry["source"] == "storage":
@@ -171,7 +189,7 @@ def run_patcher(dotnet, sdk, name, scratch, *args):
     (scratch / f"{name}-patch.json").write_text(result.stdout, encoding="utf-8")
 
 
-def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan):
+def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan, compatibility):
     csc, sdk = locate_csc(dotnet)
     output = scratch / "Managed"
     output.mkdir()
@@ -182,6 +200,12 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
         print(f"Preparing {len(plan)} managed assemblies from the Windows installation", flush=True)
         run_patcher(dotnet, sdk, "reemit", scratch, windows, plan_file, generated)
         private_sources = {**private_sources, **{item["name"]: generated / item["name"] for item in plan}}
+    if compatibility:
+        generated = scratch / "compat-output"
+        print(f"Adapting {len(compatibility)} Windows assemblies for Unity 2023", flush=True)
+        run_patcher(dotnet, sdk, "compat", scratch, windows, private_sources["UnityEngine.CoreModule.dll"],
+                    generated, *compatibility)
+        private_sources = {**private_sources, **{name: generated / name for name in compatibility}}
     for name, entry in recipe["files"].items():
         if entry["source"] == "windows":
             shutil.copyfile(windows / name, output / name)
@@ -245,7 +269,9 @@ def install(args):
         raise ValueError(f"Expected a Unity MacStandaloneSupport directory: {unity_support}")
     private_sources = resolve_private_sources(private, recipe, unity_support)
     plan = reemit_plan(recipe, private_sources)
-    compile_wwise = check_inputs(windows, private, recipe, private_sources, plan)
+    compatibility = {name: digest for name, digest in recipe["compatibility"].items()
+                     if needs_preparation(private_sources[name])}
+    compile_wwise = check_inputs(windows, private, recipe, private_sources, plan, compatibility)
     if args.check_inputs:
         print("Managed prerequisites match the release manifest")
         return
@@ -264,7 +290,8 @@ def install(args):
 
     with tempfile.TemporaryDirectory(prefix="risk2mac-managed-", dir=app.parent) as directory:
         scratch = Path(directory)
-        output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan)
+        output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise,
+                                  private_sources, plan, compatibility)
         if args.steam:
             install_steam(output, scratch, dotnet)
         managed.parent.mkdir(parents=True, exist_ok=True)

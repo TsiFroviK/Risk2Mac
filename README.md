@@ -76,11 +76,11 @@ python3 scripts/build-managed-inputs.py --port-app "$PORT" --pre-storage "$PRE_S
 bash scripts/build-native-inputs.sh --port-app "$PORT" --private "$PRIVATE"
 ```
 
-From a matching Windows installation, `build.sh` can generate two startup files, convert 247 sound banks and re-emit 42 managed DLLs. It downloads pinned build tools when those conversions are needed. An installed Unity editor with macOS Mono Build Support can supply another 92 verified DLLs. A first-time native build still requires the remaining converted bundles, startup data and adapted assemblies. The linked input guides list what to supply.
+From a matching Windows installation, `build.sh` can generate three startup files, convert 247 sound banks and prepare 50 managed DLLs. It can download the official Unity Mac Mono component into its cache. That component supplies 70 verified DLLs, and the full Unity editor provides up to 22 more. An activated Unity Editor can also compile the project's Metal depth-copy shader. The remaining game assets and adapted assemblies are listed in the input guides above.
 
 ## Build
 
-Use **Risk2Mac Builder** for a graphical setup. Download the universal macOS disk image from [Releases](https://github.com/TsiFroviK/Risk2Mac/releases), drag the builder into Applications, then select the Windows game folder and the remaining prerequisites under **Local port files**. The app runs the same conversions and input checks as `build.sh`. Use **Advanced inputs** to select custom paths for Unity, Wwise, wwiser, a .NET SDK or the tool cache. Install Xcode Command Line Tools before building.
+Use **Risk2Mac Builder** for a graphical setup. Download the universal macOS disk image from [Releases](https://github.com/TsiFroviK/Risk2Mac/releases), drag the builder into Applications, then select the Windows game folder and the remaining prerequisites under **Local port files**. The app runs the same conversions and input checks as `build.sh`. Use **Advanced inputs** to select custom paths for Unity Editor, Mac Build Support, Wwise, wwiser, a .NET SDK or the tool cache. Install Xcode Command Line Tools before building.
 
 The Builder checks for its own updates automatically. Choose **Update** to download the DMG, install the new Builder in its current folder, and restart it. **Later** postpones the update. **Don't remind me** turns off automatic checks, which you can re-enable in **Settings**.
 
@@ -111,6 +111,6 @@ bash build.sh --game "$GAME" --private "$PRIVATE" \
   --tools "/Volumes/Risk2Mac-Build/tools"
 ```
 
-The output path must be new. The build selects the architecture automatically. For explicit packaging, pass `--arch arm64` or `--arch x86_64`. `--dotnet /path/to/dotnet` selects an installed SDK. `--wwiser /path/to/wwiser` selects a local parser checkout for bank conversion. `--unity-support` and `--wwise` select the official components from non-default locations.
+The output path must be new. The build selects the architecture automatically. For explicit packaging, pass `--arch arm64` or `--arch x86_64`. `--dotnet /path/to/dotnet` selects an installed SDK. `--wwiser /path/to/wwiser` selects a local parser checkout for bank conversion. Use `--unity-editor`, `--unity-support` and `--wwise` for official components in custom locations.
 
 Open the resulting `.app` in Finder. On startup, the app writes Unity and launcher logs to `~/Library/Logs/Risk Of Rain 2/`. The `Latest-Unity.log` and `Latest-Launcher.log` links point to the latest run. Configuration, mod lists, run reports and generated caches use `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.

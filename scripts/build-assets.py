@@ -14,6 +14,7 @@ import subprocess
 import sys
 
 from risk2mac_banks import BankConverter, download_wwiser
+from risk2mac_depth import build_depth_bundle, find_unity_editor
 from risk2mac_startup import transform_startup
 
 
@@ -53,7 +54,7 @@ def load_manifest():
             or ".." in relative.parts
             or "\\" in row["path"]
             or relative.parts[0] == "Managed"
-            or row["kind"] not in {"copy", "bank", "catalog", "line-endings", "startup", "private"}
+            or row["kind"] not in {"copy", "bank", "catalog", "line-endings", "startup", "depth-copy", "private"}
         ):
             raise ValueError(f"Invalid asset manifest entry: {row['path']}")
         key = str(relative).casefold()
@@ -112,12 +113,13 @@ def normalize_catalog(source: Path) -> bytes:
 
 
 def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | None,
-                   check_only: bool, tool_cache: Path | None = None):
+                   check_only: bool, tool_cache: Path | None = None, unity_editor: Path | None = None):
     data = game if game.name == "Risk of Rain 2_Data" else game / "Risk of Rain 2_Data"
     private_data = within(private, Path("assets") / DATA)
     rows = load_manifest()
     checks = []
     prepared_startup = set()
+    depth_editor = None
     if wwiser is None and (private / "wwiser" / ".git").exists():
         wwiser = private / "wwiser"
     fetch_wwiser = wwiser is None and tool_cache is not None and any(
@@ -126,8 +128,17 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     for row in rows:
         kind = row["kind"]
         relative = row["path"]
+        if kind == "depth-copy":
+            local = within(private_data, relative)
+            if not local.is_file():
+                depth_editor = find_unity_editor(unity_editor)
+                if depth_editor is None:
+                    raise ValueError(f"Install Unity Editor 2023.1.0f1 or supply the prepared depth-copy bundle at {local}")
+            else:
+                checks.append((local, row["sha256"], row["bytes"]))
+            continue
         if kind == "startup" and within(private_data, relative).is_file():
-            # Earlier recipes accepted Windows input sets without these two files.
+            # Earlier recipes accepted Windows input sets without startup metadata.
             checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
             prepared_startup.add(relative)
             continue
@@ -163,10 +174,12 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             output_file(target, row, data=source.read_bytes().replace(b"\r\n", b"\n"))
         elif kind == "startup" and relative not in prepared_startup:
             output_file(target, row, data=transform_startup(relative, source))
+        elif kind == "depth-copy" and depth_editor is not None:
+            output_file(target, row, data=build_depth_bundle(depth_editor))
         elif kind == "bank" and converter is not None:
             output_file(target, row, data=converter.convert(source))
         else:
-            if kind in {"private", "bank", "startup"}:
+            if kind in {"private", "bank", "startup", "depth-copy"}:
                 source = within(private_data, relative)
             output_file(target, row, source=source)
     print(f"Verified assembled assets: {len(rows)}", flush=True)
@@ -180,7 +193,9 @@ def export_private(source_app: Path, private: Path, include_banks: bool):
     destination = within(private, Path("assets") / DATA)
     if destination.resolve().is_relative_to(source.resolve()):
         raise ValueError("Private inputs must be stored separately from the source .app")
-    kinds = {"private", "bank"} if include_banks else {"private"}
+    kinds = {"private", "depth-copy"}
+    if include_banks:
+        kinds.add("bank")
     rows = [row for row in load_manifest() if row["kind"] in kinds]
     verify_all(
         (within(source, row["path"]), row["sha256"], row["bytes"])
@@ -202,12 +217,13 @@ def main():
     parser.add_argument("--private", required=True, type=Path, help="Private inputs directory")
     parser.add_argument("--wwiser", type=Path, help="Optional pinned local wwiser Git checkout")
     parser.add_argument("--tools", type=Path, help="Fetch and cache the pinned upstream wwiser if converted banks are missing")
+    parser.add_argument("--unity-editor", type=Path, help="Unity 2023.1.0f1 app or executable for building the depth-copy shader")
     parser.add_argument("--check", action="store_true", help="Validate build inputs without assembling")
     parser.add_argument("--include-banks", action="store_true", help="Export the 247 converted audio banks too")
     args = parser.parse_args()
     if args.export_private:
-        if args.app or args.wwiser or args.tools or args.check:
-            parser.error("--export-private cannot be combined with --app, --wwiser, --tools or --check")
+        if args.app or args.wwiser or args.tools or args.unity_editor or args.check:
+            parser.error("--export-private only accepts --private and --include-banks")
         export_private(args.export_private, args.private, args.include_banks)
         return
     if args.include_banks or (not args.app and not args.check):
@@ -218,7 +234,7 @@ def main():
         for source in (args.game, args.private):
             if args.app.resolve().is_relative_to(source.resolve()) or source.resolve().is_relative_to(args.app.resolve()):
                 parser.error("--app and its input directories must be separate")
-    prepare_assets(args.game, args.app, args.private, args.wwiser, args.check, args.tools)
+    prepare_assets(args.game, args.app, args.private, args.wwiser, args.check, args.tools, args.unity_editor)
 
 
 if __name__ == "__main__":

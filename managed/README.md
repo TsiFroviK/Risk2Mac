@@ -6,9 +6,9 @@
 
 Put prepared files marked `private`, `storage` and `wwise` in `PRIVATE/managed/`. The `storage` entries are `RoR2.dll` and `ModLoader.dll` before the storage repair. Supply the `input_sha256` versions when using prepared files. The main README has an extraction command for owners of the matching port who have both backups. It exports 148 managed inputs.
 
-For missing inputs, the installed Unity 2023.1.0f1 macOS Mono Build Support and Mono runtime provide up to 92 DLLs. The matching Windows installation provides another 42 through verified PE re-emission with [AsmResolver.DotNet 6.0.1](https://www.nuget.org/packages/AsmResolver.DotNet/6.0.1), including the baseline `ModLoader.dll`. Both paths enforce the manifest SHA-256. Use `--unity-support /path/to/MacStandaloneSupport` if the module is installed outside its default Unity Hub location.
+For missing inputs, Unity 2023.1.0f1 Mac Mono Build Support supplies 70 DLLs. The full editor's macOS Mono runtime profile can supply 22 more. The matching Windows installation provides 48 DLLs through verified PE generation with [AsmResolver.DotNet 6.0.1](https://www.nuget.org/packages/AsmResolver.DotNet/6.0.1), including the baseline `ModLoader.dll`. Two further compatibility patches prepare `HGUnityUtils.dll` and `Unity.RenderPipelines.Core.Runtime.dll`. All paths enforce the manifest SHA-256. Use `--unity-support /path/to/MacStandaloneSupport` if the module is installed outside its default Unity Hub location.
 
-With both sources available, the builder still requires 12 prepared private DLLs, the modified baseline `RoR2.dll` and the Wwise adapter below.
+With both sources and the complete Unity Mono profile available, the builder still requires four prepared private DLLs, the modified baseline `RoR2.dll` and the Wwise adapter below.
 
 The `wwise` entry is the prepared `AK.Wwise.Unity.API.dll`. Alternatively, supply both of the following files from the matching Wwise 2024.1.18 Unity Integration downloads in `PRIVATE/wwise/`. The script checks the exact source hashes and rebuilds the adapter from the Windows assembly.
 
