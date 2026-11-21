@@ -63,7 +63,9 @@ private struct BuilderView: View {
                     .font(.callout).foregroundColor(.secondary)
                 Spacer()
                 Button(tr("Build instructions ↗", "Инструкция ↗")) {
-                    if let url = URL(string: "https://github.com/TsiFroviK/Risk2Mac#requirements") {
+                    let instructions = tr("https://github.com/TsiFroviK/Risk2Mac#requirements",
+                                          "https://github.com/TsiFroviK/Risk2Mac/blob/main/README.ru.md")
+                    if let url = URL(string: instructions) {
                         NSWorkspace.shared.open(url)
                     }
                 }.buttonStyle(PlainButtonStyle()).foregroundColor(.accentColor)
@@ -79,7 +81,12 @@ private struct BuilderView: View {
                             .accessibilityAddTraits(.isHeader)
                         VStack(alignment: .leading, spacing: 12) {
                             PathRow(title: tr("Windows game folder", "Папка игры для Windows"), path: $game)
-                            PathRow(title: tr("Private prerequisites", "Локальные файлы для сборки"), path: $prerequisites)
+                            PathRow(title: tr("Local port files", "Локальные файлы порта"), path: $prerequisites,
+                                    hint: "Prerequisites")
+                            Text(tr("Choose the folder with the remaining converted Unity assets and port assemblies.",
+                                    "Укажите папку с оставшимися преобразованными ресурсами Unity и сборками порта."))
+                                .font(.caption).foregroundColor(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                         Divider()
                         Toggle(tr("Steam integration", "Интеграция Steam"), isOn: $steam)
@@ -99,7 +106,8 @@ private struct BuilderView: View {
                             VStack(alignment: .leading, spacing: 12) {
                                 PathRow(title: "Unity 2023.1.0f1 MacStandaloneSupport", path: $unity)
                                 PathRow(title: "Wwise 2024.1.18", path: $wwise, selection: .either)
-                                PathRow(title: "wwiser", path: $wwiser)
+                                PathRow(title: "wwiser", path: $wwiser,
+                                        hint: tr("Downloaded when needed", "Скачивается при необходимости"))
                                 PathRow(title: tr(".NET 8 executable", "Исполняемый файл .NET 8"), path: $dotnet, selection: .file)
                                 PathRow(title: tr("Tool cache", "Кэш инструментов"), path: $tools, canCreateDirectories: true)
                                 Picker(tr("Architecture", "Архитектура"), selection: $arch) {

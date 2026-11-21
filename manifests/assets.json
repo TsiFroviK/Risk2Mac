@@ -1,6 +1,6 @@
 {"format":1,"files":[
 {"path":"Resources/unity_builtin_extra","sha256":"e2227b2affa5d251dd8eb8ff3cdf240d5d616e964bd6ee4182323823aead749d","bytes":409224,"kind":"private"},
-{"path":"RuntimeInitializeOnLoads.json","sha256":"57eccb4dc1b1376f7306987c7e1c46f10d87e8776560f13fbdeea08d0d3f376c","bytes":4614,"kind":"private"},
+{"path":"RuntimeInitializeOnLoads.json","sha256":"57eccb4dc1b1376f7306987c7e1c46f10d87e8776560f13fbdeea08d0d3f376c","bytes":4614,"kind":"startup","input_sha256":"eaa5a6c96faf9bcf30779c0998096037aee470e593013d5cac14f7983c4c7370"},
 {"path":"ScriptingAssemblies.json","sha256":"9057034da4d94cf0a98fbf79525113882cb830058752b4fd1cb23f8f257f880a","bytes":4425,"kind":"private"},
 {"path":"StreamingAssets/Audio/GeneratedSoundBanks/Windows/Boss_ArtifactShell.bnk","sha256":"c48c8e66da51b2b31addd6d2241c101bc3d689cda113c98822db2de451ab5e95","bytes":1075283,"kind":"bank","input_sha256":"545f5c1b42b3adb689f0aa5f36d11a3b64698bf6eaf697d9dbe70d1a162693fe"},
 {"path":"StreamingAssets/Audio/GeneratedSoundBanks/Windows/Boss_ArtifactShell.txt","sha256":"ba5b9d217b829dcfdade29de04806fd3377efdfd1b41d61869d78c409c42c8fa","bytes":7368,"kind":"copy"},
@@ -2493,7 +2493,7 @@
 {"path":"StreamingAssets/desc.txt","sha256":"e38b465a91fce04051dea7b2f5f50f839f306ca4f69af6612e3f03d8d96acd83","bytes":238,"kind":"copy"},
 {"path":"StreamingAssets/lrapi_returns.json","sha256":"d8681e33025a14776c646a2760c3d669ceaa838676724b38cf7148b041db7beb","bytes":20259086,"kind":"copy"},
 {"path":"app.info","sha256":"4a3cc9c2658f63f34b40b3123ed7299ce90b2ffb1d99c0e50c97af4d5f111728","bytes":31,"kind":"copy"},
-{"path":"boot.config","sha256":"1b4087b61cf5890d125b1fc583db5371020e97d9b63d48b49aba0a392551677d","bytes":114,"kind":"private"},
+{"path":"boot.config","sha256":"1b4087b61cf5890d125b1fc583db5371020e97d9b63d48b49aba0a392551677d","bytes":114,"kind":"startup","input_sha256":"25202c8f0caa8139d220c1db829ac0445de52047059b03c920c7d145ddfeb4ba"},
 {"path":"globalgamemanagers","sha256":"386f3a18bc3b506ae94eb5914a4adf09d9375701c15a9398e7c802b3bd252e84","bytes":252164,"kind":"private"},
 {"path":"globalgamemanagers.assets","sha256":"2502ec16cbb9b3d66dbf9cd12e12f34d01d4a9b762e191dcb210bf0d1c65b7cc","bytes":309300,"kind":"private"},
 {"path":"globalgamemanagers.assets.resS","sha256":"39dd38fcd8dd95d41d6d55fe16a448d29fe2c31d9a162c825c24c6d99a893d7a","bytes":2796240,"kind":"private"},

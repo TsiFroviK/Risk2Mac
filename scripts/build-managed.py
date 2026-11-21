@@ -16,6 +16,10 @@ WINDOWS_DATA = "Risk of Rain 2_Data"
 MANAGED_PATH = Path("Contents/Resources/Data/Managed")
 RUNTIME_REFS = ("mscorlib.dll", "System.dll", "System.Core.dll")
 UNITY_REFS = ("UnityEngine.dll", "UnityEngine.CoreModule.dll")
+UNITY_VERSION = "2023.1.0f1"
+UNITY_CONTENTS = Path("/Applications/Unity/Hub/Editor") / UNITY_VERSION / "Unity.app/Contents"
+UNITY_MAC_MODULE = Path("PlaybackEngines/MacStandaloneSupport")
+UNITY_MAC_MONO_PROFILE = Path("MonoBleedingEdge/lib/mono/unityjit-macos")
 
 
 def sha256(path):
@@ -38,10 +42,56 @@ def read_recipe():
     recipe = json.loads((SOURCE / "inputs.json").read_text(encoding="utf-8"))
     if recipe["schema"] != 1:
         raise ValueError("Unsupported managed input manifest")
+    recipe["windows_reemit"] = json.loads((SOURCE / "reemit/inputs.json").read_text(encoding="utf-8"))
     return recipe
 
 
-def check_inputs(windows, private, recipe):
+def unity_managed_directories(private, unity_support):
+    if unity_support is None:
+        local = private / "native/UnityMacSupport"
+        unity_support = local if local.is_dir() else UNITY_CONTENTS / UNITY_MAC_MODULE
+
+    # A complete Editor and a separately installed Mac Build Support module
+    # can supply the runtime DLLs independently. Reference DLLs are excluded.
+    editor = unity_support.parent.parent if unity_support.parent.name == "PlaybackEngines" else None
+    profiles = [unity_support / UNITY_MAC_MONO_PROFILE, UNITY_CONTENTS / UNITY_MAC_MONO_PROFILE]
+    if editor is not None:
+        profiles.insert(0, editor / UNITY_MAC_MONO_PROFILE)
+    directories = [unity_support / "Variations/mono/Managed"]
+    for profile in profiles:
+        directories.extend((profile, profile / "Facades"))
+    return tuple(dict.fromkeys(directories))
+
+
+def resolve_private_sources(private, recipe, unity_support=None):
+    directories = unity_managed_directories(private, unity_support)
+    sources = {}
+    for name, entry in recipe["files"].items():
+        if entry["source"] not in {"private", "storage"}:
+            continue
+        local = private / "managed" / name
+        if entry["source"] == "storage" or local.exists() or local.is_symlink():
+            sources[name] = local
+            continue
+        candidates = [directory / name for directory in directories if (directory / name).is_file()]
+        sources[name] = next((candidate for candidate in candidates if sha256(candidate) == entry["sha256"]),
+                             candidates[0] if candidates else local)
+    return sources
+
+
+def reemit_plan(recipe, private_sources):
+    return [
+        {
+            "name": name,
+            "inputSha256": expected,
+            "outputSha256": recipe["files"][name].get("input_sha256", recipe["files"][name]["sha256"]),
+        }
+        for name, expected in recipe["windows_reemit"].items()
+        if not private_sources[name].exists() and not private_sources[name].is_symlink()
+    ]
+
+
+def check_inputs(windows, private, recipe, private_sources, plan):
     errors = []
 
     def check(path, expected):
@@ -60,12 +110,17 @@ def check_inputs(windows, private, recipe):
         for name, expected in wwise_sources.items():
             check(wwise / name, expected)
 
+    reemitting = {item["name"]: item["inputSha256"] for item in plan}
     for name, entry in recipe["files"].items():
-        if entry["source"] == "windows":
+        if name in reemitting:
+            check(windows / name, reemitting[name])
+        elif entry["source"] == "windows":
             check(windows / name, entry["sha256"])
         elif entry["source"] == "storage":
-            check(private / "managed" / name, entry["input_sha256"])
-        elif entry["source"] == "private" or (entry["source"] == "wwise" and not compile_wwise):
+            check(private_sources[name], entry["input_sha256"])
+        elif entry["source"] == "private":
+            check(private_sources[name], entry["sha256"])
+        elif entry["source"] == "wwise" and not compile_wwise:
             check(private / "managed" / name, entry["sha256"])
     if errors:
         raise ValueError("Managed prerequisites did not match the supported release:\n" + "\n".join(errors))
@@ -116,14 +171,24 @@ def run_patcher(dotnet, sdk, name, scratch, *args):
     (scratch / f"{name}-patch.json").write_text(result.stdout, encoding="utf-8")
 
 
-def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise):
+def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan):
     csc, sdk = locate_csc(dotnet)
     output = scratch / "Managed"
     output.mkdir()
+    if plan:
+        plan_file = scratch / "reemit-plan.json"
+        plan_file.write_text(json.dumps(plan), encoding="utf-8")
+        generated = scratch / "reemit-output"
+        print(f"Preparing {len(plan)} managed assemblies from the Windows installation", flush=True)
+        run_patcher(dotnet, sdk, "reemit", scratch, windows, plan_file, generated)
+        private_sources = {**private_sources, **{item["name"]: generated / item["name"] for item in plan}}
     for name, entry in recipe["files"].items():
         if entry["source"] == "windows":
             shutil.copyfile(windows / name, output / name)
-        elif entry["source"] == "private" or (entry["source"] == "wwise" and not compile_wwise):
+        elif entry["source"] in {"private", "storage"}:
+            shutil.copyfile(private_sources[name], output / name)
+            assert_file(output / name, entry.get("input_sha256", entry["sha256"]))
+        elif entry["source"] == "wwise" and not compile_wwise:
             shutil.copyfile(private / "managed" / name, output / name)
 
     # Compile against the same Unity 2021 Windows reference assembly versions
@@ -146,9 +211,9 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise):
 
     run_patcher(dotnet, sdk, "dpad", scratch, windows / "Rewired_Core.dll", dpad, output / "Rewired_Core.dll")
     patched_storage = scratch / "storage-patched"
-    run_patcher(dotnet, sdk, "storage", scratch, private / "managed", storage, patched_storage)
+    run_patcher(dotnet, sdk, "storage", scratch, output, storage, patched_storage)
     for name in ("RoR2.dll", "ModLoader.dll"):
-        (patched_storage / name).rename(output / name)
+        (patched_storage / name).replace(output / name)
 
     if compile_wwise:
         wwise_refs = (*RUNTIME_REFS, "netstandard.dll", *UNITY_REFS,
@@ -175,7 +240,12 @@ def install(args):
     private = args.private.resolve(strict=True)
     windows = game / WINDOWS_DATA / "Managed"
     recipe = read_recipe()
-    compile_wwise = check_inputs(windows, private, recipe)
+    unity_support = args.unity_support.resolve(strict=True) if args.unity_support is not None else None
+    if unity_support is not None and not unity_support.is_dir():
+        raise ValueError(f"Expected a Unity MacStandaloneSupport directory: {unity_support}")
+    private_sources = resolve_private_sources(private, recipe, unity_support)
+    plan = reemit_plan(recipe, private_sources)
+    compile_wwise = check_inputs(windows, private, recipe, private_sources, plan)
     if args.check_inputs:
         print("Managed prerequisites match the release manifest")
         return
@@ -194,7 +264,7 @@ def install(args):
 
     with tempfile.TemporaryDirectory(prefix="risk2mac-managed-", dir=app.parent) as directory:
         scratch = Path(directory)
-        output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise)
+        output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan)
         if args.steam:
             install_steam(output, scratch, dotnet)
         managed.parent.mkdir(parents=True, exist_ok=True)
@@ -233,6 +303,7 @@ def main():
     parser.add_argument("--game", type=Path, required=True)
     parser.add_argument("--app", type=Path)
     parser.add_argument("--private", type=Path, required=True)
+    parser.add_argument("--unity-support", type=Path, help=f"Official Unity {UNITY_VERSION} MacStandaloneSupport directory")
     parser.add_argument("--dotnet", default="dotnet")
     parser.add_argument("--check-inputs", action="store_true")
     parser.add_argument("--steam", action="store_true")

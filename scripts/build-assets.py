@@ -13,7 +13,8 @@ import shutil
 import subprocess
 import sys
 
-from risk2mac_banks import BankConverter
+from risk2mac_banks import BankConverter, download_wwiser
+from risk2mac_startup import transform_startup
 
 
 REPO = Path(__file__).resolve().parents[1]
@@ -52,7 +53,7 @@ def load_manifest():
             or ".." in relative.parts
             or "\\" in row["path"]
             or relative.parts[0] == "Managed"
-            or row["kind"] not in {"copy", "bank", "catalog", "line-endings", "private"}
+            or row["kind"] not in {"copy", "bank", "catalog", "line-endings", "startup", "private"}
         ):
             raise ValueError(f"Invalid asset manifest entry: {row['path']}")
         key = str(relative).casefold()
@@ -110,18 +111,27 @@ def normalize_catalog(source: Path) -> bytes:
     return json.dumps(document, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
 
-def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | None, check_only: bool):
+def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | None,
+                   check_only: bool, tool_cache: Path | None = None):
     data = game if game.name == "Risk of Rain 2_Data" else game / "Risk of Rain 2_Data"
     private_data = within(private, Path("assets") / DATA)
     rows = load_manifest()
     checks = []
+    prepared_startup = set()
     if wwiser is None and (private / "wwiser" / ".git").exists():
         wwiser = private / "wwiser"
-    converter = BankConverter(wwiser) if wwiser is not None else None
+    fetch_wwiser = wwiser is None and tool_cache is not None and any(
+        row["kind"] == "bank" and not within(private_data, row["path"]).is_file() for row in rows
+    )
     for row in rows:
         kind = row["kind"]
         relative = row["path"]
-        if kind in {"copy", "bank", "catalog", "line-endings"}:
+        if kind == "startup" and within(private_data, relative).is_file():
+            # Earlier recipes accepted Windows input sets without these two files.
+            checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
+            prepared_startup.add(relative)
+            continue
+        if kind != "private":
             checks.append(
                 (
                     within(data, relative),
@@ -129,9 +139,12 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
                     row["bytes"] if kind == "copy" else None,
                 )
             )
-        if kind == "private" or (kind == "bank" and converter is None):
+        if kind == "private" or (kind == "bank" and wwiser is None and not fetch_wwiser):
             checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
     verify_all(checks)
+    if fetch_wwiser:
+        wwiser = download_wwiser(tool_cache)
+    converter = BankConverter(wwiser) if wwiser is not None else None
     counts = Counter(row["kind"] for row in rows)
     print(f"Asset inputs verified: {len(rows)} files, {dict(counts)}", flush=True)
     if check_only:
@@ -148,10 +161,12 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             output_file(target, row, data=normalize_catalog(source))
         elif kind == "line-endings":
             output_file(target, row, data=source.read_bytes().replace(b"\r\n", b"\n"))
+        elif kind == "startup" and relative not in prepared_startup:
+            output_file(target, row, data=transform_startup(relative, source))
         elif kind == "bank" and converter is not None:
             output_file(target, row, data=converter.convert(source))
         else:
-            if kind in {"private", "bank"}:
+            if kind in {"private", "bank", "startup"}:
                 source = within(private_data, relative)
             output_file(target, row, source=source)
     print(f"Verified assembled assets: {len(rows)}", flush=True)
@@ -186,12 +201,13 @@ def main():
     parser.add_argument("--app", type=Path, help="Staged macOS .app output")
     parser.add_argument("--private", required=True, type=Path, help="Private inputs directory")
     parser.add_argument("--wwiser", type=Path, help="Optional pinned local wwiser Git checkout")
+    parser.add_argument("--tools", type=Path, help="Fetch and cache the pinned upstream wwiser if converted banks are missing")
     parser.add_argument("--check", action="store_true", help="Validate build inputs without assembling")
     parser.add_argument("--include-banks", action="store_true", help="Export the 247 converted audio banks too")
     args = parser.parse_args()
     if args.export_private:
-        if args.app or args.wwiser or args.check:
-            parser.error("--export-private cannot be combined with --app, --wwiser or --check")
+        if args.app or args.wwiser or args.tools or args.check:
+            parser.error("--export-private cannot be combined with --app, --wwiser, --tools or --check")
         export_private(args.export_private, args.private, args.include_banks)
         return
     if args.include_banks or (not args.app and not args.check):
@@ -202,7 +218,7 @@ def main():
         for source in (args.game, args.private):
             if args.app.resolve().is_relative_to(source.resolve()) or source.resolve().is_relative_to(args.app.resolve()):
                 parser.error("--app and its input directories must be separate")
-    prepare_assets(args.game, args.app, args.private, args.wwiser, args.check)
+    prepare_assets(args.game, args.app, args.private, args.wwiser, args.check, args.tools)
 
 
 if __name__ == "__main__":

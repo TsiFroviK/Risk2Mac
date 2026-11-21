@@ -178,13 +178,15 @@ def main():
         run("/bin/bash", str(ROOT / "scripts/build-native.sh"), *common, "--arch", arch, *native_args)
         print("[2/4] Game data", flush=True)
         extra = ["--wwiser", str(options.wwiser.expanduser().resolve())] if options.wwiser else []
-        run(sys.executable, str(ROOT / "scripts/build-assets.py"), *common, *extra)
+        run(sys.executable, str(ROOT / "scripts/build-assets.py"), *common, "--tools", str(cache), *extra)
         print("[3/4] Managed assemblies", flush=True)
         dotnet = dotnet_sdk(host, cache, options.dotnet.expanduser().resolve() if options.dotnet else None)
         environment = dict(os.environ, DOTNET_NOLOGO="1", DOTNET_CLI_TELEMETRY_OPTOUT="1",
                            DOTNET_GENERATE_ASPNET_CERTIFICATE="false", DOTNET_ADD_GLOBAL_TOOLS_TO_PATH="false",
                            DOTNET_CLI_HOME=str(cache / "dotnet-home"), NUGET_PACKAGES=str(cache / "nuget"))
         managed_args = ["--steam"] if options.steam else []
+        if options.unity_support:
+            managed_args.extend(("--unity-support", str(options.unity_support.expanduser().resolve())))
         subprocess.run([sys.executable, str(ROOT / "scripts/build-managed.py"), *common, "--dotnet", dotnet, *managed_args],
                        check=True, env=environment)
         print("[4/4] App bundle and signature", flush=True)

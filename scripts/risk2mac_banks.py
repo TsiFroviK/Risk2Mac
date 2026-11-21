@@ -7,9 +7,11 @@ from pathlib import Path
 import struct
 import subprocess
 import sys
+import tempfile
 
 
 WWISER_COMMIT = "08e937b649bc7007c234bbd59e34a41d5eef3b38"
+WWISER_REPOSITORY = "https://github.com/bnnm/wwiser.git"
 REFERENCE_ENV_SHA256 = "9578357c5542aa43a58cec5188d9589b166ed68f021c4cd8c72de0e590cf8b13"
 
 
@@ -51,6 +53,30 @@ def apply_edits(start, payload, edits):
         cursor = offset + size
     parts.append(payload[cursor - start :])
     return b"".join(parts)
+
+
+def download_wwiser(cache: Path) -> Path:
+    destination = cache / f"wwiser-{WWISER_COMMIT}"
+    if destination.exists() or destination.is_symlink():
+        return destination
+
+    cache.mkdir(parents=True, exist_ok=True)
+    print(f"Fetching wwiser {WWISER_COMMIT} from its upstream repository", flush=True)
+    with tempfile.TemporaryDirectory(prefix=".wwiser-", dir=cache) as temporary:
+        checkout = Path(temporary) / "checkout"
+        subprocess.run(["git", "init", "--quiet", str(checkout)], check=True)
+        git = ["git", "-C", str(checkout)]
+        subprocess.run([*git, "config", "core.autocrlf", "false"], check=True)
+        subprocess.run([*git, "fetch", "--quiet", "--depth=1", WWISER_REPOSITORY, WWISER_COMMIT], check=True)
+        hooks = Path(temporary) / "hooks"
+        hooks.mkdir()
+        subprocess.run([*git, "-c", f"core.hooksPath={hooks}", "checkout", "--quiet", "--detach", WWISER_COMMIT], check=True)
+        try:
+            checkout.rename(destination)
+        except OSError:
+            if not destination.is_dir():
+                raise
+    return destination
 
 
 class BankConverter:

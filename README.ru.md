@@ -76,11 +76,11 @@ python3 scripts/build-managed-inputs.py --port-app "$PORT" --pre-storage "$PRE_S
 bash scripts/build-native-inputs.sh --port-app "$PORT" --private "$PRIVATE"
 ```
 
-Для первой сборки с одной Windows-установкой сначала нужно самостоятельно подготовить недостающие совместимые ресурсы и сборки. Их можно сверить по манифестам. Публичной загрузки этих файлов в проекте нет.
+Из подходящей Windows-установки `build.sh` может сгенерировать два загрузочных файла, преобразовать 247 звуковых банков и пересобрать 42 DLL. При необходимости он скачивает закреплённые версии инструментов. Из Unity с установленным macOS Mono Build Support скрипт может взять ещё 92 DLL после проверки контрольных сумм. Для первой нативной сборки по-прежнему требуются остальные преобразованные бандлы, загрузочные ресурсы и адаптированные сборки. Точные требования перечислены в инструкциях выше.
 
 ## Сборка
 
-Для сборки без Терминала скачайте универсальный DMG **Risk2Mac Builder** из раздела [Releases](https://github.com/TsiFroviK/Risk2Mac/releases), перенесите приложение в «Программы» и укажите папки с Windows-версией игры и локальными файлами для сборки. В «Дополнительных параметрах» можно отдельно выбрать Unity, Wwise, wwiser, .NET SDK и кэш инструментов. Сборщик использует те же файлы и проверки, что и команда ниже. Перед сборкой установите Xcode Command Line Tools.
+Для сборки без Терминала скачай универсальный DMG **Risk2Mac Builder** из раздела [Releases](https://github.com/TsiFroviK/Risk2Mac/releases) и перенеси приложение в «Программы». Выбери папку Windows-версии игры и укажи оставшиеся компоненты в поле **«Локальные файлы порта»**. Приложение выполняет те же преобразования и проверки, что и `build.sh`. Свои пути к Unity, Wwise, wwiser, .NET SDK и кэшу можно задать в **«Дополнительных параметрах»**. Перед сборкой установи Xcode Command Line Tools.
 
 Сборщик автоматически проверяет собственные обновления. Кнопка **«Обновить»** скачивает DMG, устанавливает новую версию сборщика в ту же папку и перезапускает его. **«Позже»** откладывает обновление, а **«Не напоминать»** выключает автопроверку. Включить её снова можно в **«Настройках»**.
 
@@ -95,7 +95,7 @@ GAME="/путь/к/Windows/Risk of Rain 2"
 PRIVATE="/путь/к/Prerequisites"
 OUTPUT="$HOME/Risk2Mac Builds/Risk of Rain 2.app"
 
-python3 scripts/build-assets.py --game "$GAME" --private "$PRIVATE" --check
+python3 scripts/build-assets.py --game "$GAME" --private "$PRIVATE" --tools "$HOME/Library/Caches/Risk2Mac" --check
 python3 scripts/build-managed.py --game "$GAME" --private "$PRIVATE" --check-inputs
 bash build.sh --game "$GAME" --private "$PRIVATE" --output "$OUTPUT"
 ```
@@ -111,6 +111,6 @@ bash build.sh --game "$GAME" --private "$PRIVATE" \
   --tools "/Volumes/Risk2Mac-Build/tools"
 ```
 
-Укажи новый путь для `.app`. По умолчанию скрипт выбирает архитектуру самого Mac. Для явного выбора используй `--arch arm64` или `--arch x86_64`. Параметр `--dotnet /путь/к/dotnet` указывает установленный SDK. `--wwiser /путь/к/wwiser` включает локальное преобразование звуковых банков. Параметры `--unity-support` и `--wwise` позволяют указать нестандартные пути к официальным компонентам.
+Укажи новый путь для `.app`. По умолчанию скрипт выбирает архитектуру самого Mac. Для явного выбора используй `--arch arm64` или `--arch x86_64`. Параметр `--dotnet /путь/к/dotnet` указывает установленный SDK. `--wwiser /путь/к/wwiser` выбирает локальную копию парсера для преобразования банков. Параметры `--unity-support` и `--wwise` позволяют указать нестандартные пути к официальным компонентам.
 
 Открой готовый `.app` в Finder. Логи Unity и запуска находятся в `~/Library/Logs/Risk Of Rain 2/`. Ссылки `Latest-Unity.log` и `Latest-Launcher.log` ведут на последний запуск. Настройки, список модов, отчёты и кэш хранятся в `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.
