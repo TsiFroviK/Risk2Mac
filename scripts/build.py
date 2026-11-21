@@ -13,6 +13,7 @@ import sys
 import tempfile
 
 from icon import install_icon
+from steam_install import install_destination, print_shortcut_instructions, register_shortcut, steam_root
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -118,7 +119,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game", required=True, type=Path, help="Windows game folder containing Risk of Rain 2_Data")
     parser.add_argument("--private", required=True, type=Path, help="Directory of local prerequisite files")
-    parser.add_argument("--output", required=True, type=Path, help="New .app path on a Mac filesystem")
+    parser.add_argument("--output", type=Path, help="New .app path for a local build on a Mac filesystem")
     parser.add_argument("--arch", choices=("arm64", "x86_64"), help="Override the default host architecture")
     parser.add_argument("--dotnet", type=Path, help="Use a local dotnet executable with the .NET 8 SDK")
     parser.add_argument("--tools", type=Path, default=Path.home() / "Library/Caches/Risk2Mac", help="Local SDK download cache")
@@ -126,27 +127,38 @@ def main():
     parser.add_argument("--unity-support", type=Path, help="Official Unity 2023.1.0f1 MacStandaloneSupport directory")
     parser.add_argument("--wwise", type=Path, help="Official Wwise 2024.1.18 macOS integration archive or directory")
     parser.add_argument("--steam", action="store_true", help="Enable Steam integration using the Steam client installed on the destination Mac")
+    parser.add_argument("--steam-library", type=Path, help="Existing Steam library root (Steam Settings > Storage)")
     options = parser.parse_args()
+    if options.steam and options.output:
+        parser.error("--steam selects the output from Steam's libraries. Omit --output and optionally supply --steam-library.")
+    if not options.steam and (not options.output or options.steam_library):
+        parser.error("Use --output for a local build. --steam-library requires --steam.")
     host = host_architecture()
     arch = options.arch or host
-    game, private, output, cache = (p.expanduser().resolve() for p in (options.game, options.private, options.output, options.tools))
+    game, private, cache = (p.expanduser().resolve() for p in (options.game, options.private, options.tools))
+    steam = steam_root() if options.steam else None
+    output = install_destination(steam, options.steam_library) if steam else options.output.expanduser().resolve()
     if not (game / (TITLE + "_Data") / "StreamingAssets").is_dir():
         raise ValueError(f"Windows game data not found in {game}")
     if not private.is_dir():
         raise ValueError(f"Private prerequisites directory not found: {private}")
     if private == ROOT or ROOT in private.parents:
         raise ValueError("Keep private prerequisites outside the Risk2Mac repository.")
-    if output.suffix != ".app" or output.exists():
+    if output.suffix != ".app" or output.exists() or output.is_symlink():
         raise ValueError(f"Choose a new .app output path: {output}")
-    for location in (output, cache):
-        if any(location == path or path in location.parents for path in (ROOT, game)):
-            raise ValueError(f"Choose output and tool cache paths outside the repository and the game: {location}")
-    if private in output.parents:
+    # A Steam build may read an existing Windows install in its intended game
+    # folder. Keep every subprocess's staging files outside that input tree.
+    staging_parent = output.parent.parent if steam else output.parent
+    if any(location.is_relative_to(source) for location in (staging_parent, cache) for source in (ROOT, game)):
+        raise ValueError("Choose build and tool cache paths outside the repository and the game.")
+    if output.is_relative_to(ROOT):
+        raise ValueError("Choose an output path outside the repository.")
+    if output.is_relative_to(private) or staging_parent.is_relative_to(private):
         raise ValueError("Choose an output path outside the private inputs directory.")
-    output.parent.mkdir(parents=True, exist_ok=True)
+    staging_parent.mkdir(parents=True, exist_ok=True)
     run("/usr/bin/xcode-select", "-p")
-    print(f"Host: {host}. Target: {arch}.", flush=True)
-    with tempfile.TemporaryDirectory(prefix=".risk2mac-", dir=output.parent) as tmp:
+    print(f"Host: {host}. Target: {arch}.\nOutput: {output}", flush=True)
+    with tempfile.TemporaryDirectory(prefix=".risk2mac-", dir=staging_parent) as tmp:
         stage = Path(tmp)
         probe = stage / "permissions"
         probe.touch()
@@ -179,10 +191,19 @@ def main():
         assemble_metadata(app, game)
         run("/usr/bin/codesign", "--force", "--sign", "-", "--deep", str(app))
         run("/usr/bin/codesign", "--verify", "--deep", "--strict", str(app))
-        if output.exists():
+        if steam and install_destination(steam, options.steam_library) != output:
+            raise ValueError("The selected Steam library changed during the build")
+        if output.exists() or output.is_symlink():
             raise ValueError(f"Output was created during this build: {output}")
+        output.parent.mkdir(parents=True, exist_ok=True)
         app.rename(output)
     print(f"Built {output}", flush=True)
+    if steam:
+        try:
+            print(register_shortcut(steam, output), flush=True)
+        except (OSError, ValueError, plistlib.InvalidFileException) as error:
+            print(f"Steam shortcut could not be registered automatically: {error}", flush=True)
+            print_shortcut_instructions(output)
 
 
 if __name__ == "__main__":

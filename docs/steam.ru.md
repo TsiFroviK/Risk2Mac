@@ -13,19 +13,26 @@
 ```bash
 GAME="/путь/к/Windows/Risk of Rain 2"
 PRIVATE="/путь/к/Prerequisites"
-OUTPUT="$HOME/Risk2Mac Builds/Steam/Risk of Rain 2.app"
 
 python3 scripts/prepare-steam.py --private "$PRIVATE"
-bash build.sh --game "$GAME" --private "$PRIVATE" --output "$OUTPUT" --steam
+bash build.sh --game "$GAME" --private "$PRIVATE" --steam
 ```
 
 `prepare-steam.py` скачивает 37 подходящих заголовочных файлов старого SDK из закреплённого коммита Facepunch и сверяет SHA-256 каждого файла с `native/steam-legacy-headers.json`. Он сохраняет их в `PRIVATE/native/steam-legacy-headers/`, повторно использует проверенные файлы и останавливается при несовпадении уже существующего файла. Сборщик создаёт нативные обёртки локально. На заголовки распространяются авторские права Valve и применимые условия Steamworks SDK. [Закреплённый источник заголовков](https://github.com/Facepunch/Facepunch.Steamworks/tree/605054339ad88fd09eeb7e0a82ca0eb78737b334/Generator/steam_sdk), [документация Steamworks SDK](https://partner.steamgames.com/doc/sdk)
 
-Каталог результата должен поддерживать Unix-права, а путь к создаваемому `.app` должен быть новым. Архитектура выбирается обычным способом сборщика. Для явного выбора используйте `--arch arm64` или `--arch x86_64`.
+С флагом `--steam` сборщик выбирает библиотеку Steam и сохраняет приложение по пути `steamapps/common/Risk of Rain 2/Risk of Rain 2.app`. Если Steam уже знает папку этой игры, используется она. В остальных случаях используется библиотека по умолчанию. Чтобы выбрать другую библиотеку из раздела **Steam → Настройки → Хранилище**, укажите `--steam-library "/путь/к/SteamLibrary"`. Параметр `--output` в этом режиме опустите. Том должен поддерживать Unix-права, а путь к создаваемому `.app` должен быть новым. Для явного выбора архитектуры используйте `--arch arm64` или `--arch x86_64`.
 
 ## Запуск игры
 
-Установите нативный клиент Steam обычным способом, войдите в аккаунт с Risk of Rain 2 и оставьте Steam запущенным. Откройте созданный `.app` через Finder. Порт загружает библиотеки с подписью Valve из `~/Library/Application Support/Steam/Steam.AppBundle/`. Поддерживайте клиент Steam в актуальном состоянии.
+Установите нативный клиент Steam и войдите в аккаунт с Risk of Rain 2. Издатель выпускает игру в Steam для Windows. Сборка для Mac отображается в библиотеке отдельным ярлыком **Risk of Rain 2 (Risk2Mac)** с кнопкой **«Играть»**. [Магазин Steam](https://store.steampowered.com/app/632360/) · [Поддержка Steam](https://help.steampowered.com/ru/faqs/view/4B8B-9697-2338-40EC)
+
+Если Steam закрыт по окончании сборки, сборщик регистрирует ярлык для последнего аккаунта на этом Mac. Если Steam запущен, откройте **Игры → Добавить стороннюю игру → Обзор** и выберите готовое приложение по пути из журнала сборки. Также можно выйти из Steam и повторить только регистрацию ярлыка.
+
+```bash
+python3 scripts/steam_install.py --register-shortcut "$HOME/Library/Application Support/Steam/steamapps/common/Risk of Rain 2/Risk of Rain 2.app"
+```
+
+Если выбрали другую библиотеку, укажите фактический путь к сборке. При запущенном Steam игру можно открыть из библиотеки или через Finder. Порт загружает библиотеки с подписью Valve из `~/Library/Application Support/Steam/Steam.AppBundle/`. Поддерживайте клиент Steam в актуальном состоянии.
 
 Запускатор также загружает установленный оверлей Steam до создания устройства Metal. Shift+Tab открывает его, если оверлей включён в настройках Steam. Запускатор проверяет подпись Valve для архитектуры текущего Mac; если Steam закрыт, библиотека отсутствует или не проходит проверку, игра продолжает запуск без оверлея. В принудительном локальном режиме оверлей не загружается. Библиотеки оверлея Valve не входят в репозиторий или создаваемое приложение. Исправление ранней загрузки проверено на Apple Silicon; оверлей на Intel ещё требует проверки на соответствующем Mac. [Требования оверлея Steam](https://partner.steamgames.com/doc/features/overlay)
 
@@ -34,7 +41,7 @@ bash build.sh --game "$GAME" --private "$PRIVATE" --output "$OUTPUT" --steam
 Если при запуске не удаётся инициализировать Steam, получить доступ к аккаунту или проверить необходимые интерфейсы, приложение автоматически выбирает локальный режим. Для принудительного локального запуска при диагностике задайте `RISK2MAC_FORCE_LOCAL=1`.
 
 ```bash
-RISK2MAC_FORCE_LOCAL=1 "/Applications/Risk of Rain 2.app/Contents/MacOS/Risk of Rain 2"
+RISK2MAC_FORCE_LOCAL=1 "/путь/к/Risk of Rain 2.app/Contents/MacOS/Risk of Rain 2"
 ```
 
 ## Мультиплеер и проверки

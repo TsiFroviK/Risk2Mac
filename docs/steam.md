@@ -13,19 +13,26 @@ From the Risk2Mac repository, set the paths for your machine and run the additio
 ```bash
 GAME="/path/to/Windows/Risk of Rain 2"
 PRIVATE="/path/to/Prerequisites"
-OUTPUT="$HOME/Risk2Mac Builds/Steam/Risk of Rain 2.app"
 
 python3 scripts/prepare-steam.py --private "$PRIVATE"
-bash build.sh --game "$GAME" --private "$PRIVATE" --output "$OUTPUT" --steam
+bash build.sh --game "$GAME" --private "$PRIVATE" --steam
 ```
 
 `prepare-steam.py` downloads 37 matching legacy SDK headers from a pinned Facepunch commit and verifies each SHA-256 against `native/steam-legacy-headers.json`. It stores them under `PRIVATE/native/steam-legacy-headers/`, reuses verified files, and stops if an existing file differs. The build generates its native wrappers locally. The headers retain Valve's copyright and the applicable Steamworks SDK terms. [Pinned upstream headers](https://github.com/Facepunch/Facepunch.Steamworks/tree/605054339ad88fd09eeb7e0a82ca0eb78737b334/Generator/steam_sdk), [Steamworks SDK documentation](https://partner.steamgames.com/doc/sdk)
 
-The output directory must support Unix permissions and the `.app` path must be new. Architecture selection follows the normal builder behavior. Use `--arch arm64` or `--arch x86_64` to select it explicitly.
+With `--steam`, the builder chooses Steam's library and writes `steamapps/common/Risk of Rain 2/Risk of Rain 2.app`. It uses Steam's registered game directory when present, otherwise the default library. To choose another library already listed under **Steam → Settings → Storage**, pass `--steam-library "/path/to/SteamLibrary"`. Omit `--output` in this mode. The output volume must support Unix permissions and the `.app` path must be new. Use `--arch arm64` or `--arch x86_64` to select the architecture explicitly.
 
 ## Start the game
 
-Install the native Steam client normally, sign in to an account that owns Risk of Rain 2, and leave Steam running. Open the generated `.app` in Finder. The port loads Valve-signed libraries from `~/Library/Application Support/Steam/Steam.AppBundle/`. Keep the Steam client up to date.
+Install the native Steam client and sign in to an account that owns Risk of Rain 2. Steam offers the publisher's game on Windows. The Mac build appears in your Steam library as a **Risk of Rain 2 (Risk2Mac)** local shortcut with a **Play** button. [Steam store](https://store.steampowered.com/app/632360/) · [Steam Support](https://help.steampowered.com/en/faqs/view/4B8B-9697-2338-40EC)
+
+If Steam is closed when the build finishes, the builder registers the shortcut for the most recent account on that Mac. If Steam is running, use **Games → Add a Non-Steam Game → Browse** and select the built `.app` using the path in the build log. You can also quit Steam and rerun only the shortcut registration step.
+
+```bash
+python3 scripts/steam_install.py --register-shortcut "$HOME/Library/Application Support/Steam/steamapps/common/Risk of Rain 2/Risk of Rain 2.app"
+```
+
+Use the actual output path if you selected a different library. Launch the game from the library shortcut or Finder with Steam running. The port loads Valve-signed libraries from `~/Library/Application Support/Steam/Steam.AppBundle/`. Keep the Steam client up to date.
 
 The launcher also loads Steam's installed overlay before the Metal device is created. Shift+Tab opens it when the overlay is enabled in Steam settings. The launcher verifies Valve's signature for the current Mac architecture; it continues without the overlay if Steam is closed or the renderer is missing or fails verification. Forced local mode skips overlay loading. No Valve overlay binaries are included in the repository or generated app. This early-loading fix was verified on Apple Silicon; Intel overlay behavior still needs hardware testing. [Steam overlay requirements](https://partner.steamgames.com/doc/features/overlay)
 
@@ -34,7 +41,7 @@ Steam mode uses the game's Steam account and cloud profile path. The local profi
 When Steam initialization, account access or required interface checks fail, the app automatically selects local mode during startup. To explicitly launch in local mode for troubleshooting, run the bundle launcher with `RISK2MAC_FORCE_LOCAL=1`.
 
 ```bash
-RISK2MAC_FORCE_LOCAL=1 "/Applications/Risk of Rain 2.app/Contents/MacOS/Risk of Rain 2"
+RISK2MAC_FORCE_LOCAL=1 "/path/to/Risk of Rain 2.app/Contents/MacOS/Risk of Rain 2"
 ```
 
 ## Multiplayer and validation
