@@ -16,6 +16,7 @@ APP_ID = "632360"
 APP_BUNDLE = "Risk of Rain 2.app"
 GAME_DIR = "Risk of Rain 2"
 SHORTCUT_NAME = "Risk of Rain 2 (Risk2Mac)"
+PLAY_SHORTCUT_HINT = f'In the Steam Library, play the Risk2Mac shortcut ("{SHORTCUT_NAME}" by default).'
 SHORTCUT_HEADER = b"\x00shortcuts\0"
 VDF_LIMIT = 8 * 1024 * 1024
 STEAM_ID_BASE = 76561197960265728
@@ -277,6 +278,7 @@ def save_shortcut(destination, app):
 def print_shortcut_instructions(app):
     print("In Steam, choose Games → Add a Non-Steam Game → Browse, and select:", flush=True)
     print(str(app), flush=True)
+    print(f'In the shortcut properties, name it "{SHORTCUT_NAME}" to identify the macOS port.', flush=True)
 
 
 if __name__ == "__main__":
@@ -291,6 +293,7 @@ if __name__ == "__main__":
             print(json.dumps([str(path) for path in libraries(root)]))
         else:
             print(register_shortcut(root, args.register_shortcut))
+            print(PLAY_SHORTCUT_HINT)
     except (OSError, ValueError, plistlib.InvalidFileException) as error:
         if args.register_shortcut:
             print_shortcut_instructions(args.register_shortcut)

@@ -21,9 +21,9 @@ With `--steam`, the builder chooses Steam's library and writes `steamapps/common
 
 ## Start the game
 
-Install the native Steam client and sign in to an account that owns Risk of Rain 2. Steam offers the publisher's game on Windows. The Mac build appears in your Steam library as a **Risk of Rain 2 (Risk2Mac)** local shortcut with a **Play** button. [Steam store](https://store.steampowered.com/app/632360/) · [Steam Support](https://help.steampowered.com/en/faqs/view/4B8B-9697-2338-40EC)
+Install the native Steam client and sign in to an account that owns Risk of Rain 2. In the Steam Library, select **Risk of Rain 2 (Risk2Mac)** and click **Play**. The publisher's **Risk of Rain 2** entry launches the Windows release. [Steam store](https://store.steampowered.com/app/632360/) · [Steam Support](https://help.steampowered.com/en/faqs/view/4B8B-9697-2338-40EC)
 
-If Steam is closed when the build finishes, the builder registers the shortcut for the most recent account on that Mac. If Steam is running, use **Games → Add a Non-Steam Game → Browse** and select the built `.app` using the path in the build log. You can also quit Steam and rerun only the shortcut registration step.
+If Steam is closed when the build finishes, the builder registers the shortcut for the most recent account on that Mac. If Steam is running, use **Games → Add a Non-Steam Game → Browse** and select the built `.app` using the path in the build log. Name the shortcut **Risk of Rain 2 (Risk2Mac)** in its properties so it is easy to find in the library. You can also quit Steam and rerun only the shortcut registration step.
 
 ```bash
 python3 scripts/steam_install.py --register-shortcut "$HOME/Library/Application Support/Steam/steamapps/common/Risk of Rain 2/Risk of Rain 2.app"

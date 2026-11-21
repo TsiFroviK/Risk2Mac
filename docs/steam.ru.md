@@ -21,9 +21,9 @@ bash build.sh --game "$GAME" --steam
 
 ## Запуск игры
 
-Установите нативный клиент Steam и войдите в аккаунт с Risk of Rain 2. Издатель выпускает игру в Steam для Windows. Сборка для Mac отображается в библиотеке отдельным ярлыком **Risk of Rain 2 (Risk2Mac)** с кнопкой **«Играть»**. [Магазин Steam](https://store.steampowered.com/app/632360/) · [Поддержка Steam](https://help.steampowered.com/ru/faqs/view/4B8B-9697-2338-40EC)
+Установите нативный клиент Steam и войдите в аккаунт с Risk of Rain 2. В библиотеке Steam выберите ярлык **Risk of Rain 2 (Risk2Mac)** и нажмите **«Играть»**. Карточка издателя **Risk of Rain 2** запускает Windows-версию игры. [Магазин Steam](https://store.steampowered.com/app/632360/) · [Поддержка Steam](https://help.steampowered.com/ru/faqs/view/4B8B-9697-2338-40EC)
 
-Если Steam закрыт по окончании сборки, сборщик регистрирует ярлык для последнего аккаунта на этом Mac. Если Steam запущен, откройте **Игры → Добавить стороннюю игру → Обзор** и выберите готовое приложение по пути из журнала сборки. Также можно выйти из Steam и повторить только регистрацию ярлыка.
+Если Steam закрыт по окончании сборки, сборщик регистрирует ярлык для последнего аккаунта на этом Mac. Если Steam запущен, откройте **Игры → Добавить стороннюю игру → Обзор** и выберите готовое приложение по пути из журнала сборки. Назовите ярлык **Risk of Rain 2 (Risk2Mac)** в его свойствах, чтобы его было легко найти в библиотеке. Также можно выйти из Steam и повторить только регистрацию ярлыка.
 
 ```bash
 python3 scripts/steam_install.py --register-shortcut "$HOME/Library/Application Support/Steam/steamapps/common/Risk of Rain 2/Risk of Rain 2.app"

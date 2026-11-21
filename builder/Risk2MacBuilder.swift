@@ -565,11 +565,11 @@ private final class BuildModel: ObservableObject {
                     self.progress = 1
                     self.needsSteamShortcut = steam && !addedToSteam
                     if self.needsSteamShortcut {
-                        self.status = tr("Build complete. Quit Steam, then click Add to Steam.",
-                                         "Сборка готова. Закройте Steam и нажмите «Добавить в Steam».")
+                        self.status = tr("Build complete. Quit Steam, then click Add to Steam to create the “Risk of Rain 2 (Risk2Mac)” shortcut.",
+                                         "Сборка готова. Закройте Steam и нажмите «Добавить в Steam», чтобы создать ярлык «Risk of Rain 2 (Risk2Mac)».")
                     } else if addedToSteam {
-                        self.status = tr("Build complete. Open Steam to play from your library.",
-                                         "Сборка готова. Откройте Steam, чтобы запустить игру из библиотеки.")
+                        self.status = tr("Build complete. In your Steam Library, play the Risk2Mac shortcut (“Risk of Rain 2 (Risk2Mac)” by default).",
+                                         "Сборка готова. В библиотеке Steam запустите ярлык порта (по умолчанию «Risk of Rain 2 (Risk2Mac)»).")
                     } else {
                         self.status = tr("Build complete.", "Сборка готова.")
                     }
@@ -602,7 +602,8 @@ private final class BuildModel: ObservableObject {
                 DispatchQueue.main.async {
                     self.running = false
                     self.needsSteamShortcut = false
-                    self.status = tr("Open Steam to play from your library.", "Откройте Steam, чтобы запустить игру из библиотеки.")
+                    self.status = tr("In your Steam Library, play the Risk2Mac shortcut (“Risk of Rain 2 (Risk2Mac)” by default).",
+                                     "В библиотеке Steam запустите ярлык порта (по умолчанию «Risk of Rain 2 (Risk2Mac)»).")
                 }
             } catch {
                 DispatchQueue.main.async {

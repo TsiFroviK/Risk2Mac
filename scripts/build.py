@@ -16,7 +16,7 @@ from icon import install_icon
 from risk2mac_depth import find_unity_editor
 from risk2mac_unity import open_unity_setup, prepare_unity
 from risk2mac_wwise_sdk import SOURCE_FILES, discover_wwise, open_wwise_setup, stage_sources
-from steam_install import install_destination, print_shortcut_instructions, register_shortcut, steam_root
+from steam_install import PLAY_SHORTCUT_HINT, install_destination, print_shortcut_instructions, register_shortcut, steam_root
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -266,6 +266,7 @@ def main():
     if steam:
         try:
             print(register_shortcut(steam, output), flush=True)
+            print(PLAY_SHORTCUT_HINT, flush=True)
         except (OSError, ValueError, plistlib.InvalidFileException) as error:
             print(f"Steam shortcut could not be registered automatically: {error}", flush=True)
             print_shortcut_instructions(output)
