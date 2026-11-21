@@ -3,10 +3,20 @@ import SwiftUI
 
 @main
 struct Risk2MacBuilder: App {
+    @StateObject private var build = BuildModel()
+    @StateObject private var updates = BuilderUpdates()
+
+    init() {
+        BuilderUpdater.applyPendingIfRequested()
+    }
+
     var body: some Scene {
         WindowGroup("Risk2Mac Builder") {
-            BuilderView()
+            BuilderView(build: build, updates: updates)
                 .frame(minWidth: 690, minHeight: 535)
+        }
+        Settings {
+            BuilderSettings(updates: updates)
         }
     }
 }
@@ -16,8 +26,9 @@ private func tr(_ en: String, _ ru: String) -> String {
     return Locale(identifier: preferred).languageCode == "ru" ? ru : en
 }
 
-struct BuilderView: View {
-    @StateObject private var build = BuildModel()
+private struct BuilderView: View {
+    @ObservedObject var build: BuildModel
+    @ObservedObject var updates: BuilderUpdates
     @AppStorage("game") private var game = ""
     @AppStorage("prerequisites") private var prerequisites = ""
     @AppStorage("destination") private var destination = ""
@@ -30,6 +41,16 @@ struct BuilderView: View {
     @AppStorage("tools") private var tools = ""
     @AppStorage("arch") private var arch = ""
     @State private var advanced = false
+    @State private var windowID = UUID()
+
+    private var busy: Bool { build.running || updates.installing }
+
+    private var updatePresented: Binding<Bool> {
+        Binding(
+            get: { updates.sheetWindow == windowID && updates.dialog != nil && !build.running },
+            set: { if !$0 && !build.running && updates.sheetWindow == windowID { updates.dismiss() } }
+        )
+    }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -90,7 +111,7 @@ struct BuilderView: View {
                         }
                     }
                     .padding(24)
-                    .disabled(build.running)
+                    .disabled(busy)
                 }
                 Divider()
                 VStack(alignment: .leading, spacing: 9) {
@@ -118,22 +139,31 @@ struct BuilderView: View {
                                 NSWorkspace.shared.activateFileViewerSelecting([app])
                             }
                             if build.needsSteamShortcut {
-                                Button(tr("Add to Steam", "Добавить в Steam")) { build.registerInSteam(app) }
-                                    .disabled(build.running)
+                                Button(tr("Add to Steam", "Добавить в Steam")) {
+                                    if !busy { build.registerInSteam(app) }
+                                }.disabled(busy)
                             }
                         }
                         Spacer()
                         Button(tr("Build", "Собрать"), action: beginBuild)
                             .keyboardShortcut(.defaultAction)
-                            .disabled(build.running || game.trimmed.isEmpty || prerequisites.trimmed.isEmpty
+                            .disabled(busy || game.trimmed.isEmpty || prerequisites.trimmed.isEmpty
                                       || (!steam && destination.trimmed.isEmpty))
                     }
                 }.padding(.horizontal, 24).padding(.vertical, 15)
             }
-        }.frame(idealWidth: 780, idealHeight: 600)
+        }
+        .frame(idealWidth: 780, idealHeight: 600)
+        .onAppear { updates.attachWindow(windowID) }
+        .onDisappear { updates.detachWindow(windowID) }
+        .sheet(isPresented: updatePresented) {
+            UpdateSheet(updates: updates, build: build)
+        }
     }
 
     private func beginBuild() {
+        guard !busy, !game.trimmed.isEmpty, !prerequisites.trimmed.isEmpty,
+              steam || !destination.trimmed.isEmpty else { return }
         var arguments = ["--game", game.trimmed, "--private", prerequisites.trimmed]
         let output: URL?
         if steam {
@@ -156,9 +186,228 @@ struct BuilderView: View {
     }
 }
 
+private struct BuilderSettings: View {
+    @ObservedObject var updates: BuilderUpdates
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Toggle(tr("Check for updates", "Проверять обновления"), isOn: Binding(
+                get: { updates.checksEnabled },
+                set: { updates.setChecksEnabled($0) }
+            ))
+            .toggleStyle(SwitchToggleStyle())
+            .disabled(updates.installing)
+
+            if let error = updates.checkError {
+                Text(tr("Could not check for updates.", "Не удалось проверить обновления."))
+                    .fontWeight(.medium)
+                Text(error).font(.caption).foregroundColor(.secondary).textSelectionIfAvailable()
+                Button(tr("Try again", "Повторить")) { updates.check() }
+                    .disabled(updates.checking || updates.installing)
+            }
+        }
+        .padding(22)
+        .frame(width: 385, alignment: .leading)
+    }
+}
+
+private struct UpdateSheet: View {
+    @ObservedObject var updates: BuilderUpdates
+    @ObservedObject var build: BuildModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 13) {
+            if let dialog = updates.dialog {
+                switch dialog {
+                case let .offer(release):
+                    heading(tr("Risk2Mac Builder update available", "Доступно обновление Risk2Mac Builder"))
+                    Text("\(updates.currentVersion) -> \(release.version)").font(.headline)
+                    Text(tr("Risk2Mac Builder will install the update and restart.",
+                            "Risk2Mac Builder установит обновление и перезапустится."))
+                        .foregroundColor(.secondary)
+                    Divider().padding(.vertical, 3)
+                    HStack {
+                        Spacer()
+                        Button(tr("Update", "Обновить")) {
+                            if !build.running { updates.install(release) }
+                        }
+                        .keyboardShortcut(.defaultAction)
+                        .disabled(build.running)
+                        Button(tr("Later", "Позже"), action: updates.dismiss)
+                            .keyboardShortcut(.cancelAction)
+                        Button(tr("Don't remind me", "Не напоминать")) { updates.setChecksEnabled(false) }
+                    }
+                case let .installing(progress):
+                    heading(tr("Updating Risk2Mac Builder", "Обновление Risk2Mac Builder"))
+                    Text(progress < 1
+                         ? tr("Downloading the disk image…", "Скачивание образа DMG…")
+                         : tr("Verifying and installing…", "Проверка и установка…"))
+                        .foregroundColor(.secondary)
+                    HStack {
+                        ProgressView(value: progress)
+                            .accessibilityLabel(tr("Update progress", "Ход обновления"))
+                        Text("\(Int(progress * 100))%").font(.system(.caption, design: .monospaced))
+                    }
+                case let .failure(message, release):
+                    heading(tr("Could not update Risk2Mac Builder", "Не удалось обновить Risk2Mac Builder"))
+                    ScrollView {
+                        Text(message).frame(maxWidth: .infinity, alignment: .leading)
+                            .font(.callout).foregroundColor(.secondary).textSelectionIfAvailable()
+                    }.frame(maxHeight: 125)
+                    HStack {
+                        Spacer()
+                        Button(tr("Later", "Позже"), action: updates.dismiss)
+                            .keyboardShortcut(.cancelAction)
+                        if updates.checksEnabled {
+                            Button(tr("Try again", "Повторить")) {
+                                guard !build.running else { return }
+                                if let release = release {
+                                    updates.install(release)
+                                } else {
+                                    updates.dismiss()
+                                    updates.check(showFailure: true)
+                                }
+                            }
+                            .keyboardShortcut(.defaultAction)
+                            .disabled(build.running)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(24)
+        .frame(width: 450, alignment: .leading)
+        .preventDismissalIfAvailable(updates.installing)
+    }
+
+    private func heading(_ title: String) -> some View {
+        Text(title).font(.title2).fontWeight(.semibold).accessibilityAddTraits(.isHeader)
+    }
+}
+
+private final class BuilderUpdates: ObservableObject {
+    enum Dialog {
+        case offer(BuilderRelease)
+        case installing(Double)
+        case failure(String, BuilderRelease?)
+    }
+
+    private static let preference = "checkUpdates"
+    private static let interval: TimeInterval = 6 * 60 * 60
+
+    let currentVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.0.0"
+    @Published private(set) var checksEnabled = UserDefaults.standard.object(forKey: BuilderUpdates.preference) as? Bool ?? true
+    @Published private(set) var dialog: Dialog?
+    @Published private(set) var checkError: String?
+    @Published private(set) var checking = false
+    @Published private(set) var sheetWindow: UUID?
+
+    private var windows: [UUID] = []
+    private var timer: Timer?
+    private var checkToken: UUID?
+
+    var installing: Bool {
+        if case .installing? = dialog { return true }
+        return false
+    }
+
+    func attachWindow(_ id: UUID) {
+        if !windows.contains(id) { windows.append(id) }
+        if sheetWindow == nil { sheetWindow = id }
+        guard timer == nil else { return }
+        let timer = Timer(timeInterval: Self.interval, repeats: true) { [weak self] _ in self?.check() }
+        self.timer = timer
+        RunLoop.main.add(timer, forMode: .common)
+        if let failure = BuilderUpdater.takePendingError() {
+            dialog = .failure(failure, nil)
+        } else {
+            check()
+        }
+    }
+
+    func detachWindow(_ id: UUID) {
+        windows.removeAll { $0 == id }
+        if sheetWindow == id { sheetWindow = windows.first }
+    }
+
+    func setChecksEnabled(_ enabled: Bool) {
+        guard checksEnabled != enabled, !installing else { return }
+        checksEnabled = enabled
+        UserDefaults.standard.set(enabled, forKey: Self.preference)
+        if enabled {
+            check()
+        } else {
+            checkToken = nil
+            checking = false
+            checkError = nil
+            dialog = nil
+        }
+    }
+
+    func check(showFailure: Bool = false) {
+        guard checksEnabled, !checking, dialog == nil else { return }
+        postponeAutomaticCheck()
+        let token = UUID()
+        checkToken = token
+        checking = true
+        BuilderUpdater.check(currentVersion: currentVersion) { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self, self.checkToken == token else { return }
+                self.checkToken = nil
+                self.checking = false
+                switch result {
+                case let .success(release):
+                    self.checkError = nil
+                    if let release = release { self.dialog = .offer(release) }
+                case let .failure(error):
+                    self.checkError = error.localizedDescription
+                    if showFailure { self.dialog = .failure(error.localizedDescription, nil) }
+                }
+            }
+        }
+    }
+
+    func install(_ release: BuilderRelease) {
+        guard checksEnabled, !installing else { return }
+        dialog = .installing(0)
+        BuilderUpdater.install(release, progress: { [weak self] progress in
+            DispatchQueue.main.async {
+                guard let self = self, case let .installing(previous)? = self.dialog,
+                      progress.isFinite else { return }
+                self.dialog = .installing(max(previous, min(progress, 1)))
+            }
+        }, completion: { [weak self] result in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch result {
+                case .success:
+                    self.dialog = .installing(1)
+                    NSApp.terminate(nil)
+                case let .failure(error):
+                    self.dialog = .failure(error.localizedDescription, release)
+                }
+            }
+        })
+    }
+
+    func dismiss() {
+        guard dialog != nil, !installing else { return }
+        dialog = nil
+        postponeAutomaticCheck()
+    }
+
+    private func postponeAutomaticCheck() {
+        timer?.fireDate = Date().addingTimeInterval(Self.interval)
+    }
+}
+
 private extension View {
     @ViewBuilder func textSelectionIfAvailable() -> some View {
         if #available(macOS 12, *) { textSelection(.enabled) } else { self }
+    }
+
+    @ViewBuilder func preventDismissalIfAvailable(_ prevent: Bool) -> some View {
+        if #available(macOS 12, *) { interactiveDismissDisabled(prevent) } else { self }
     }
 }
 

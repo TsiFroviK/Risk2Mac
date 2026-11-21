@@ -82,6 +82,8 @@ If starting with the Windows game for the first time, you need to prepare the mi
 
 Use **Risk2Mac Builder** for a graphical setup. Download the universal macOS disk image from [Releases](https://github.com/TsiFroviK/Risk2Mac/releases), drag the builder into Applications, then select the Windows game folder and your local prerequisites. The **Advanced inputs** disclosure lets you choose Unity, Wwise, wwiser, a .NET SDK and the tool cache individually. The builder runs the same recipe and input checks as the command below. Install Xcode Command Line Tools before building.
 
+The Builder checks for its own updates automatically. Choose **Update** to download the DMG, install the new Builder in its current folder, and restart it. **Later** postpones the update. **Don't remind me** turns off automatic checks, which you can re-enable in **Settings**.
+
 With Steam integration enabled, choose a registered Steam library. The builder puts the app in that library and adds a local Steam shortcut when Steam is closed. The store version advertises Windows, so the native app appears as a separate entry in the Mac library. See [Steam setup](docs/steam.md).
 
 ### Build from the command line

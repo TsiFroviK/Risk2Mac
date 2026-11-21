@@ -72,9 +72,10 @@ def package(output, version, staging=None):
         resources = contents / "Resources"
         macos.mkdir(parents=True)
         resources.mkdir()
+        sources = [str(BUILDER / source) for source in ("Risk2MacBuilder.swift", "BuilderUpdater.swift")]
         for arch in ("arm64", "x86_64"):
             run("/usr/bin/xcrun", "swiftc", "-swift-version", "5", "-parse-as-library", "-O",
-                "-target", f"{arch}-apple-macos11.0", str(BUILDER / "Risk2MacBuilder.swift"),
+                "-target", f"{arch}-apple-macos11.0", *sources,
                 "-o", str(stage / arch))
         executable = macos / "Risk2MacBuilder"
         run("/usr/bin/lipo", "-create", str(stage / "arm64"), str(stage / "x86_64"), "-output", str(executable))
