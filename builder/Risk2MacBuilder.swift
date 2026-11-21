@@ -21,7 +21,7 @@ struct BuilderView: View {
     @AppStorage("game") private var game = ""
     @AppStorage("prerequisites") private var prerequisites = ""
     @AppStorage("destination") private var destination = ""
-    @AppStorage("steam") private var steam = false
+    @AppStorage("steam") private var steam = true
     @AppStorage("steamLibrary") private var steamLibrary = ""
     @AppStorage("unity") private var unity = ""
     @AppStorage("wwise") private var wwise = ""
