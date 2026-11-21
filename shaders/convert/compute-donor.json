@@ -1,0 +1,14 @@
+{
+  "AutoExposure": "cba312b971aae32d73b5bd588098155f4f19172159d7c149b96555423564bd7a",
+  "ExposureHistogram": "8f6e882a9c634dcbb5ee7dc89a3c8a4a02fb349a885414d93eb4de82ee040272",
+  "GaussianDownsample": "2d12a840a756cad20625e85b902f644fa2f7f6707e3daeaefe0b00fcefae56dd",
+  "Histogram": "4a68506fbded1d79c0582ba493dbb5a9d02d1d6594a4d16c66059c8b4d9cbf40",
+  "Lut3DBaker": "fb16aac4d6f9b8257b0f076e05a3c3b034d93ad3083e87e022285e368d70b0a1",
+  "MultiScaleVODownsample1": "370df5a8bae0d661304ad35e82f3933585572cccac79d7839e0ad5807499a53d",
+  "MultiScaleVODownsample2": "e683aeee33bda9c8fcb3bc8564d9ecefbe1f4427594cc12d9c2f3ec871195bb2",
+  "MultiScaleVORender": "c5641129340bb2029767add6e83c3fc0f60e3a2ed0070100f41c3702b26e8ffe",
+  "MultiScaleVOUpsample": "4154dd7de618485cc42a0e057fc9293a77658201a5ee9c660fb3ce41d7980020",
+  "Texture3DLerp": "e79ff4107f8a54de6383321ac98f5268632e60d94003bfb2c6f886b29c056e22",
+  "Vectorscope": "46a7fb7666ecf88984dda32b9ab2408025b5f94cfc2ab2238f398819a3115e87",
+  "Waveform": "dd3e3c3af05535f785bcbf7d5e6c155bdc41ee6f328d4e369cccfba0b6474de8"
+}

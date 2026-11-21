@@ -20,7 +20,7 @@ RECIPE_SOURCE = {
     "manifests": {".json"},
     "native": {".py", ".c", ".cpp", ".h", ".m", ".json"},
     "managed": {".cs", ".csproj", ".json", ".config"},
-    "shaders": {".shader", ".meta", ".cs", ".json", ".txt"},
+    "shaders": {".shader", ".meta", ".cs", ".json", ".txt", ".py"},
 }
 
 

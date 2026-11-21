@@ -12,9 +12,11 @@ from pathlib import Path, PurePosixPath
 import shutil
 import subprocess
 import sys
+import tempfile
 
 from risk2mac_banks import BankConverter, download_wwiser
 from risk2mac_depth import build_depth_bundle, find_unity_editor
+from risk2mac_shaders import build_shader_bundles, shader_recipes
 from risk2mac_startup import transform_startup
 
 
@@ -117,8 +119,10 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     data = game if game.name == "Risk of Rain 2_Data" else game / "Risk of Rain 2_Data"
     private_data = within(private, Path("assets") / DATA)
     rows = load_manifest()
+    shaders = shader_recipes()
     checks = []
     prepared_startup = set()
+    missing_shaders = {}
     depth_editor = None
     if wwiser is None and (private / "wwiser" / ".git").exists():
         wwiser = private / "wwiser"
@@ -142,7 +146,18 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
             prepared_startup.add(relative)
             continue
-        if kind != "private":
+        if kind == "private":
+            local = within(private_data, relative)
+            bundle = Path(relative).name
+            recipe = shaders.get(bundle)
+            if recipe is not None and not local.is_file():
+                if recipe["output"] != row["sha256"] or recipe["size"] != row["bytes"]:
+                    raise ValueError(f"Shader conversion manifest disagrees with asset manifest: {relative}")
+                checks.append((within(data, relative), recipe["input"], None))
+                missing_shaders[relative] = bundle
+            else:
+                checks.append((local, row["sha256"], row["bytes"]))
+        else:
             checks.append(
                 (
                     within(data, relative),
@@ -150,38 +165,53 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
                     row["bytes"] if kind == "copy" else None,
                 )
             )
-        if kind == "private" or (kind == "bank" and wwiser is None and not fetch_wwiser):
+        if kind == "bank" and wwiser is None and not fetch_wwiser:
             checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
     verify_all(checks)
+    compute_editor = None
+    if any(shaders[name]["mode"] == "compute" for name in missing_shaders.values()):
+        compute_editor = find_unity_editor(unity_editor)
+        if compute_editor is None:
+            raise ValueError("Missing shader bundles require an activated Unity 2023.1.0f1 Editor with Mac Build Support. Use --unity-editor for a custom installation.")
     if fetch_wwiser:
         wwiser = download_wwiser(tool_cache)
     converter = BankConverter(wwiser) if wwiser is not None else None
     counts = Counter(row["kind"] for row in rows)
     print(f"Asset inputs verified: {len(rows)} files, {dict(counts)}", flush=True)
+    if missing_shaders:
+        print(f"{len(missing_shaders)} shader bundles will be converted from the Windows installation", flush=True)
     if check_only:
         return
 
     assert app is not None
     destination = within(app, DATA)
-    for row in rows:
-        kind = row["kind"]
-        relative = row["path"]
-        source = within(data, relative)
-        target = within(destination, relative)
-        if kind == "catalog":
-            output_file(target, row, data=normalize_catalog(source))
-        elif kind == "line-endings":
-            output_file(target, row, data=source.read_bytes().replace(b"\r\n", b"\n"))
-        elif kind == "startup" and relative not in prepared_startup:
-            output_file(target, row, data=transform_startup(relative, source))
-        elif kind == "depth-copy" and depth_editor is not None:
-            output_file(target, row, data=build_depth_bundle(depth_editor))
-        elif kind == "bank" and converter is not None:
-            output_file(target, row, data=converter.convert(source))
-        else:
-            if kind in {"private", "bank", "startup", "depth-copy"}:
-                source = within(private_data, relative)
-            output_file(target, row, source=source)
+    app.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="risk2mac-converted-assets-", dir=app.parent) as temporary:
+        generated = None
+        if missing_shaders:
+            cache = tool_cache or Path.home() / "Library/Caches/Risk2Mac"
+            generated = build_shader_bundles(data, Path(temporary), cache, missing_shaders.values(), compute_editor)
+        for row in rows:
+            kind = row["kind"]
+            relative = row["path"]
+            source = within(data, relative)
+            target = within(destination, relative)
+            if kind == "catalog":
+                output_file(target, row, data=normalize_catalog(source))
+            elif kind == "line-endings":
+                output_file(target, row, data=source.read_bytes().replace(b"\r\n", b"\n"))
+            elif kind == "startup" and relative not in prepared_startup:
+                output_file(target, row, data=transform_startup(relative, source))
+            elif kind == "depth-copy" and depth_editor is not None:
+                output_file(target, row, data=build_depth_bundle(depth_editor))
+            elif kind == "bank" and converter is not None:
+                output_file(target, row, data=converter.convert(source))
+            else:
+                if relative in missing_shaders:
+                    source = within(generated, missing_shaders[relative])
+                elif kind in {"private", "bank", "startup", "depth-copy"}:
+                    source = within(private_data, relative)
+                output_file(target, row, source=source)
     print(f"Verified assembled assets: {len(rows)}", flush=True)
 
 

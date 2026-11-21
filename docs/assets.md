@@ -4,13 +4,13 @@
 
 Keep `boot.config`, `RuntimeInitializeOnLoads.json` and `ScriptingAssemblies.json` in the Windows data folder for generation. Existing kits can still supply verified macOS copies.
 
-`manifests/assets.json` describes the 2,503 non-managed files in `Contents/Resources/Data` by relative path, size and SHA-256. Use a matching Windows installation as `--game`. The asset stage copies 2,158 files, normalizes the Addressables catalog and cache line endings, generates three Unity startup files and prepares 247 sound banks. It requires 92 additional local files from the matching port.
+`manifests/assets.json` describes the 2,503 non-managed files in `Contents/Resources/Data` by relative path, size and SHA-256. Use a matching Windows installation as `--game`. The asset stage copies 2,158 files, normalizes the Addressables catalog and cache line endings, generates three Unity startup files and prepares 247 sound banks. Nine startup or resource files still require compatible local copies.
 
-The private files include 83 modified Addressables bundles and nine startup or resource files from the reconstructed Unity player. The shader work translated Windows Direct3D bytecode to Metal Shading Language via SPIR-V, restored Unity variant and binding metadata, and applied targeted fixes for depth, cloud effects and post-processing. The current builder verifies those prepared bundles.
+If a prepared Addressables bundle is missing, the builder can generate it from the matching Windows bundle. It builds pinned Wine vkd3d and Khronos SPIRV-Cross from source in the tool cache to translate Direct3D shaders into Metal. Some bundles also need compute shaders compiled from Unity's official PostProcessing sources. For those bundles, use an activated Unity 2023.1.0f1 Editor with Mac Build Support. Each of the 83 generated bundles is checked against the same release SHA-256 as a prepared copy.
 
 For the project's separate depth-copy shader, the builder uses a verified local bundle when available. Otherwise it compiles the included shader source in an activated Unity 2023.1.0f1 Editor with Mac Build Support. Select a custom editor location with `--unity-editor`.
 
-For each `kind: private` entry, place the exact file under `PRIVATE/assets/Contents/Resources/Data/` using its manifest path. If you already have the matching reviewed port, the following command exports the 92 files and the optional prepared depth-copy bundle.
+Put the nine required local resources and any optional prepared bundles in `PRIVATE/assets/Contents/Resources/Data/`, using their manifest paths. If you already have the matching reviewed port, the following command exports the nine resources and all prepared bundles, including depth-copy.
 
 ```bash
 python3 scripts/build-assets.py --export-private "$PORT" --private "$PRIVATE"

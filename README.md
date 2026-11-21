@@ -76,7 +76,7 @@ python3 scripts/build-managed-inputs.py --port-app "$PORT" --pre-storage "$PRE_S
 bash scripts/build-native-inputs.sh --port-app "$PORT" --private "$PRIVATE"
 ```
 
-From a matching Windows installation, `build.sh` can generate three startup files, convert 247 sound banks and prepare 50 managed DLLs. It can download the official Unity Mac Mono component into its cache. That component supplies 70 verified DLLs, and the full Unity editor provides up to 22 more. An activated Unity Editor can also compile the project's Metal depth-copy shader. The remaining game assets and adapted assemblies are listed in the input guides above.
+From a matching Windows installation, `build.sh` can generate three startup files, convert 247 sound banks, prepare 50 managed DLLs and rebuild 83 Addressables shader bundles. It can download the official Unity Mac Mono component into its cache. That component supplies 70 verified DLLs, and the full Unity editor provides up to 22 more. The compute and depth-copy shaders need an activated Unity Editor when generated locally. The remaining game assets and adapted assemblies are listed in the input guides above.
 
 ## Build
 
