@@ -1,5 +1,5 @@
 {"format":1,"files":[
-{"path":"Resources/unity_builtin_extra","sha256":"e2227b2affa5d251dd8eb8ff3cdf240d5d616e964bd6ee4182323823aead749d","bytes":409224,"kind":"private"},
+{"path":"Resources/unity_builtin_extra","sha256":"e2227b2affa5d251dd8eb8ff3cdf240d5d616e964bd6ee4182323823aead749d","bytes":409224,"kind":"unity-builtin","inputs":{"Resources/unity_builtin_extra":"3437af0a10a2fa400cc88d8aacc147043c908da9cdcc515a46ad78b4a8b0c1a7","globalgamemanagers":"292966bcba420ae931250b19633717684d0add5277abec3e9d3c4605cc5cd236"}},
 {"path":"RuntimeInitializeOnLoads.json","sha256":"57eccb4dc1b1376f7306987c7e1c46f10d87e8776560f13fbdeea08d0d3f376c","bytes":4614,"kind":"startup","input_sha256":"eaa5a6c96faf9bcf30779c0998096037aee470e593013d5cac14f7983c4c7370"},
 {"path":"ScriptingAssemblies.json","sha256":"9057034da4d94cf0a98fbf79525113882cb830058752b4fd1cb23f8f257f880a","bytes":4425,"kind":"startup","input_sha256":"db7a7bcfe11c6b19ae9956fb4a887340061ea640d36932f823b8beb1577c0eae"},
 {"path":"StreamingAssets/Audio/GeneratedSoundBanks/Windows/Boss_ArtifactShell.bnk","sha256":"c48c8e66da51b2b31addd6d2241c101bc3d689cda113c98822db2de451ab5e95","bytes":1075283,"kind":"bank","input_sha256":"545f5c1b42b3adb689f0aa5f36d11a3b64698bf6eaf697d9dbe70d1a162693fe"},
@@ -2494,12 +2494,12 @@
 {"path":"StreamingAssets/lrapi_returns.json","sha256":"d8681e33025a14776c646a2760c3d669ceaa838676724b38cf7148b041db7beb","bytes":20259086,"kind":"copy"},
 {"path":"app.info","sha256":"4a3cc9c2658f63f34b40b3123ed7299ce90b2ffb1d99c0e50c97af4d5f111728","bytes":31,"kind":"copy"},
 {"path":"boot.config","sha256":"1b4087b61cf5890d125b1fc583db5371020e97d9b63d48b49aba0a392551677d","bytes":114,"kind":"startup","input_sha256":"25202c8f0caa8139d220c1db829ac0445de52047059b03c920c7d145ddfeb4ba"},
-{"path":"globalgamemanagers","sha256":"386f3a18bc3b506ae94eb5914a4adf09d9375701c15a9398e7c802b3bd252e84","bytes":252164,"kind":"private"},
-{"path":"globalgamemanagers.assets","sha256":"2502ec16cbb9b3d66dbf9cd12e12f34d01d4a9b762e191dcb210bf0d1c65b7cc","bytes":309300,"kind":"private"},
+{"path":"globalgamemanagers","sha256":"386f3a18bc3b506ae94eb5914a4adf09d9375701c15a9398e7c802b3bd252e84","bytes":252164,"kind":"unity-startup"},
+{"path":"globalgamemanagers.assets","sha256":"2502ec16cbb9b3d66dbf9cd12e12f34d01d4a9b762e191dcb210bf0d1c65b7cc","bytes":309300,"kind":"unity-startup"},
 {"path":"globalgamemanagers.assets.resS","sha256":"39dd38fcd8dd95d41d6d55fe16a448d29fe2c31d9a162c825c24c6d99a893d7a","bytes":2796240,"kind":"unity-splash"},
-{"path":"level0","sha256":"55a7e9878a24bb5bfec3bc0c62fc3c4db61cbc95fee70d06d054532fc7098c92","bytes":32632,"kind":"private"},
-{"path":"resources.assets","sha256":"c4b2a98dd0face2a59cfe433dabbe6191489e4f140c64e1c4b372da8f9e220ab","bytes":761744,"kind":"private"},
+{"path":"level0","sha256":"55a7e9878a24bb5bfec3bc0c62fc3c4db61cbc95fee70d06d054532fc7098c92","bytes":32632,"kind":"unity-startup"},
+{"path":"resources.assets","sha256":"c4b2a98dd0face2a59cfe433dabbe6191489e4f140c64e1c4b372da8f9e220ab","bytes":761744,"kind":"unity-startup"},
 {"path":"resources.assets.resS","sha256":"844dabeb97a5a92b6fa4131d1ea631228586c9fb521ce1c3e0eed9dd7806bcfe","bytes":1419472,"kind":"unity-textures"},
-{"path":"sharedassets0.assets","sha256":"5d8e71d04ec9c4aba2e90d0b21535a917239912f83b17608ec442d90423ed368","bytes":498048,"kind":"private"},
+{"path":"sharedassets0.assets","sha256":"5d8e71d04ec9c4aba2e90d0b21535a917239912f83b17608ec442d90423ed368","bytes":498048,"kind":"unity-startup"},
 {"path":"sharedassets0.assets.resS","sha256":"4b487f253291b5f75b6c075487d9f4d0d9f1de50aad8a54aae8f49bc0d60f33c","bytes":2783968,"kind":"unity-textures"}
 ]}

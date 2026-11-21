@@ -9,6 +9,7 @@ static IEnumerable<TypeDefinition> Types(IEnumerable<TypeDefinition> types)
 static Dictionary<string,string[]> Bodies(AssemblyDefinition a)=>Types(a.MainModule.Types).SelectMany(t=>t.Methods).ToDictionary(m=>m.FullName,m=>m.HasBody?m.Body.Instructions.Select(i=>i.ToString()).ToArray():Array.Empty<string>());
 static MethodDefinition Method(AssemblyDefinition a,string type,string name)=>Types(a.MainModule.Types).Single(t=>t.FullName==type).Methods.Single(m=>m.Name==name&&m.Parameters.Count==0);
 static bool Call(Instruction i,string type,string name)=>i.OpCode==OpCodes.Call && i.Operand is MethodReference m && m.DeclaringType.FullName==type && m.Name==name;
+const string GeneratedRoR2 = "4f873ed808b9f074cf60bffacfc3c509e47eeaeb8d616555dc29e60d636db882";
 
 if (args.Length != 3) throw new ArgumentException("StoragePatcher <baseline directory> <storage helper> <new output directory>");
 string source=Path.GetFullPath(args[0]),helper=Path.GetFullPath(args[1]),output=Path.GetFullPath(args[2]);
@@ -28,7 +29,9 @@ var records=new List<object>();
 foreach(var pair in expected)
 {
     string input=Path.Combine(source,pair.Key),destination=Path.Combine(output,pair.Key);
-    if(Sha(input)!=pair.Value)throw new Exception("Unexpected source assembly: "+input);
+    string inputHash=Sha(input);
+    if(inputHash!=pair.Value && (pair.Key!="RoR2.dll" || inputHash!=GeneratedRoR2))
+        throw new Exception("Unexpected source assembly: "+input);
     using var assembly=AssemblyDefinition.ReadAssembly(input,new ReaderParameters{ReadSymbols=false,AssemblyResolver=resolver});
     var before=Bodies(assembly);var edits=new List<object>();
     void Replace(MethodDefinition method,Instruction instruction,MethodDefinition replacement)
@@ -73,6 +76,6 @@ foreach(var pair in expected)
         differences+=changed;
     }
     if(differences!=(pair.Key=="RoR2.dll"?5:1))throw new Exception("Unexpected total operand changes");
-    records.Add(new{input,sourceSha256=pair.Value,output=destination,sha256=Sha(destination),methods=before.Count,unchangedMethods=unchanged,changedCallOperands=differences,edits});
+    records.Add(new{input,sourceSha256=inputHash,output=destination,sha256=Sha(destination),methods=before.Count,unchangedMethods=unchanged,changedCallOperands=differences,edits});
 }
 Console.WriteLine(JsonSerializer.Serialize(new{helper,helperSha256=Sha(helper),assemblies=records},new JsonSerializerOptions{WriteIndented=true}));

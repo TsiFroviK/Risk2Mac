@@ -33,6 +33,7 @@
     },
     "Assembly-CSharp.dll": {
       "sha256": "1f9a276ed342f21df941049a1cfefaa37b39716689dd8ecbb8047d71178d0662",
+      "generated_sha256": "2d22027dbf5cfb2f862028c571752620ba53a96e7865426b036e4c9a0af89038",
       "source": "private"
     },
     "AsyncManagement.dll": {
@@ -111,7 +112,8 @@
     "RoR2.dll": {
       "sha256": "b6dcf730d3c1ce9245b2fd035cea7042ee88342e7fa9bcc31d5a6291895d9c9c",
       "source": "storage",
-      "input_sha256": "ea13200d83e7db2342879b39c9e80f2c08808fb86e8b217387554aba574b15b5"
+      "input_sha256": "ea13200d83e7db2342879b39c9e80f2c08808fb86e8b217387554aba574b15b5",
+      "generated_input_sha256": "4f873ed808b9f074cf60bffacfc3c509e47eeaeb8d616555dc29e60d636db882"
     },
     "RoR2Arm64.MacDpad.dll": {
       "sha256": "59097839eac3666a92caf9d58e8238ee963a7b32cd46e777d00fa1b28430bd62",
@@ -126,8 +128,8 @@
       "source": "authored"
     },
     "RoR2Arm64.OfflinePlatform.dll": {
-      "sha256": "fcad1342a4064d4b14bfdfc8b6ca29b9800b4bb88844f4d57ce985e1a5cb252c",
-      "source": "private"
+      "sha256": "7486d1c13109e0aff90eb97752af5a43dc58806e0a999ef382aaff7537e2e7a3",
+      "source": "generated"
     },
     "SimpleJSON.dll": {
       "sha256": "8b51c8febbcc2e316fc8dbb4a7a80e25d95405ffd7f2396f05f068e58167376b",

@@ -6,19 +6,16 @@ The optional Steam build connects the native macOS player to the Steam client in
 
 ## Prepare and build
 
-Complete the normal [private input preparation](../README.md#prepare-private-inputs) first. Steam integration uses the same pinned Windows game version and private graphics, audio and managed inputs.
+Install the Steam client, prepare the matching Windows game folder and set up Unity and Wwise. The graphical Builder enables Steam integration by default. [Build requirements](../README.md#requirements)
 
-From the Risk2Mac repository, set the paths for your machine and run the additional preparation step.
+To build from Terminal, enter the Risk2Mac repository and run the following command with your game path.
 
 ```bash
 GAME="/path/to/Windows/Risk of Rain 2"
-PRIVATE="/path/to/Prerequisites"
-
-python3 scripts/prepare-steam.py --private "$PRIVATE"
-bash build.sh --game "$GAME" --private "$PRIVATE" --steam
+bash build.sh --game "$GAME" --steam
 ```
 
-`prepare-steam.py` downloads 37 matching legacy SDK headers from a pinned Facepunch commit and verifies each SHA-256 against `native/steam-legacy-headers.json`. It stores them under `PRIVATE/native/steam-legacy-headers/`, reuses verified files, and stops if an existing file differs. The build generates its native wrappers locally. The headers retain Valve's copyright and the applicable Steamworks SDK terms. [Pinned upstream headers](https://github.com/Facepunch/Facepunch.Steamworks/tree/605054339ad88fd09eeb7e0a82ca0eb78737b334/Generator/steam_sdk), [Steamworks SDK documentation](https://partner.steamgames.com/doc/sdk)
+The builder downloads the matching legacy SDK headers from a pinned Facepunch commit, verifies each SHA-256 against `native/steam-legacy-headers.json` and generates the native wrappers locally. The headers retain Valve's copyright and the applicable Steamworks SDK terms. [Pinned upstream headers](https://github.com/Facepunch/Facepunch.Steamworks/tree/605054339ad88fd09eeb7e0a82ca0eb78737b334/Generator/steam_sdk) · [Steamworks SDK documentation](https://partner.steamgames.com/doc/sdk)
 
 With `--steam`, the builder chooses Steam's library and writes `steamapps/common/Risk of Rain 2/Risk of Rain 2.app`. It uses Steam's registered game directory when present, otherwise the default library. To choose another library already listed under **Steam → Settings → Storage**, pass `--steam-library "/path/to/SteamLibrary"`. Omit `--output` in this mode. The output volume must support Unix permissions and the `.app` path must be new. Use `--arch arm64` or `--arch x86_64` to select the architecture explicitly.
 
@@ -36,7 +33,7 @@ Use the actual output path if you selected a different library. Launch the game 
 
 The launcher also loads Steam's installed overlay before the Metal device is created. Shift+Tab opens it when the overlay is enabled in Steam settings. The launcher verifies Valve's signature for the current Mac architecture; it continues without the overlay if Steam is closed or the renderer is missing or fails verification. Forced local mode skips overlay loading. No Valve overlay binaries are included in the repository or generated app. This early-loading fix was verified on Apple Silicon; Intel overlay behavior still needs hardware testing. [Steam overlay requirements](https://partner.steamgames.com/doc/features/overlay)
 
-Steam mode uses the game's Steam account and cloud profile path. The local profile remains in its separate local storage. Switching modes selects the corresponding profiles without merging their progress. DLC availability follows Steam ownership and the expansion content included in the build.
+Steam mode uses the game's Steam account and cloud profile path. Local play uses a separate profile with its own progress. The base game runs in local mode. Expansions require Steam to verify your ownership and the matching expansion content to be present in the build.
 
 When Steam initialization, account access or required interface checks fail, the app automatically selects local mode during startup. To explicitly launch in local mode for troubleshooting, run the bundle launcher with `RISK2MAC_FORCE_LOCAL=1`.
 

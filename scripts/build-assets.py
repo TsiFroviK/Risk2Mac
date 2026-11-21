@@ -19,6 +19,7 @@ from risk2mac_depth import build_depth_bundle, find_unity_editor
 from risk2mac_shaders import build_shader_bundles, prepare_asset_python, shader_recipes
 from risk2mac_splash import build_splash_stream
 from risk2mac_startup import transform_startup
+from risk2mac_startup_project import BUILTIN, DATA_FILES, STREAMS, build_startup_project, project_recipe
 from risk2mac_texture_streams import recipes as texture_recipes
 
 
@@ -28,8 +29,8 @@ DATA = Path("Contents/Resources/Data")
 RUNTIME_PATH = "{UnityEngine.AddressableAssets.Addressables.RuntimePath}"
 BUFFER = 1024 * 1024
 EDITOR_GENERATORS = {"depth-copy": build_depth_bundle, "unity-splash": build_splash_stream}
-EDITOR_ASSETS = {"unity-textures", *EDITOR_GENERATORS}
-ASSET_KINDS = {"copy", "bank", "catalog", "line-endings", "startup", "private", *EDITOR_ASSETS}
+EDITOR_ASSETS = {"unity-textures", "unity-builtin", *EDITOR_GENERATORS}
+ASSET_KINDS = {"copy", "bank", "catalog", "line-endings", "startup", "private", "unity-startup", *EDITOR_ASSETS}
 
 
 def sha256_file(path: Path) -> str:
@@ -132,6 +133,15 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     missing_shaders = {}
     missing_editor_assets = set()
     asset_editor = None
+    bootstrap_files = set()
+    if any(not within(private_data, relative).is_file() for relative in DATA_FILES):
+        bootstrap_files.update((*DATA_FILES, *STREAMS, BUILTIN))
+        asset_editor = find_unity_editor(unity_editor)
+        if asset_editor is None:
+            raise ValueError("Generating the startup scene requires Unity Editor 2023.1.0f1 (./build.sh --setup unity).")
+        checks.extend((within(data, name), digest, None) for name, digest in project_recipe()["inputs"].items())
+        if not check_only and not dotnet:
+            raise ValueError("The startup scene requires the .NET 8 SDK. Run ./build.sh to prepare it automatically.")
     if wwiser is None and (private / "wwiser" / ".git").exists():
         wwiser = private / "wwiser"
     fetch_wwiser = wwiser is None and tool_cache is not None and any(
@@ -140,6 +150,11 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     for row in rows:
         kind = row["kind"]
         relative = row["path"]
+        if relative in bootstrap_files:
+            continue
+        if kind == "unity-startup":
+            checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
+            continue
         if kind in EDITOR_ASSETS:
             local = within(private_data, relative)
             if not local.is_file():
@@ -151,6 +166,8 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
                     if not recipe or recipe["sha256"] != row["sha256"] or recipe["size"] != row["bytes"]:
                         raise ValueError(f"Texture conversion recipe disagrees with asset manifest: {relative}")
                     checks.extend((within(data, name), digest, None) for name, digest in recipe["inputs"].items())
+                if kind == "unity-builtin":
+                    checks.extend((within(data, name), digest, None) for name, digest in row["inputs"].items())
                 missing_editor_assets.add(relative)
             else:
                 checks.append((local, row["sha256"], row["bytes"]))
@@ -203,6 +220,9 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     with tempfile.TemporaryDirectory(prefix="risk2mac-converted-assets-", dir=app.parent) as temporary:
         stage = Path(temporary)
         cache = tool_cache or Path.home() / "Library/Caches/Risk2Mac"
+        bootstrap = None
+        if bootstrap_files:
+            bootstrap = build_startup_project(data, destination / "Managed", asset_editor, dotnet, stage, cache)
         generated = None
         if missing_shaders:
             generated = build_shader_bundles(data, stage, cache, missing_shaders.values(), compute_editor)
@@ -211,7 +231,14 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             relative = row["path"]
             source = within(data, relative)
             target = within(destination, relative)
-            if kind == "catalog":
+            if relative in bootstrap_files:
+                source = within(bootstrap, relative)
+                if kind == "unity-startup":
+                    # Unity writes a fresh project ID and cross-file object indices.
+                    # Validate those files as a group before copying them.
+                    row = dict(row, sha256=sha256_file(source), bytes=source.stat().st_size)
+                output_file(target, row, source=source)
+            elif kind == "catalog":
                 output_file(target, row, data=normalize_catalog(source))
             elif kind == "line-endings":
                 output_file(target, row, data=source.read_bytes().replace(b"\r\n", b"\n"))
@@ -229,6 +256,13 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
                 if result.returncode:
                     raise ValueError(f"Unity could not generate {relative}. Check the build log, Editor license and Mac Build Support (./build.sh --setup unity).")
                 output_file(target, row, source=stream)
+            elif relative in missing_editor_assets and kind == "unity-builtin":
+                python = prepare_asset_python(stage, cache)
+                builtin = stage / "unity_builtin_extra"
+                subprocess.run([str(python), "-u", str(REPO / "scripts/risk2mac_builtin.py"),
+                                "--game-data", str(data), "--editor", str(asset_editor),
+                                "--cache", str(cache), "--output", str(builtin)], check=True)
+                output_file(target, row, source=builtin)
             elif relative in missing_editor_assets:
                 output_file(target, row, data=EDITOR_GENERATORS[kind](asset_editor))
             elif kind == "bank" and converter is not None:
@@ -236,7 +270,7 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             else:
                 if relative in missing_shaders:
                     source = within(generated, missing_shaders[relative])
-                elif kind in {"private", "bank", "startup", *EDITOR_ASSETS}:
+                elif kind in {"private", "bank", "startup", "unity-startup", *EDITOR_ASSETS}:
                     source = within(private_data, relative)
                 output_file(target, row, source=source)
     print(f"Verified assembled assets: {len(rows)}", flush=True)
@@ -250,7 +284,7 @@ def export_private(source_app: Path, private: Path, include_banks: bool):
     destination = within(private, Path("assets") / DATA)
     if destination.resolve().is_relative_to(source.resolve()):
         raise ValueError("Private inputs must be stored separately from the source .app")
-    kinds = {"private", *EDITOR_ASSETS}
+    kinds = {"private", "unity-startup", *EDITOR_ASSETS}
     if include_banks:
         kinds.add("bank")
     rows = [row for row in load_manifest() if row["kind"] in kinds]

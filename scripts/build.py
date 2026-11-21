@@ -14,7 +14,6 @@ import tempfile
 
 from icon import install_icon
 from risk2mac_depth import find_unity_editor
-from risk2mac_texture_streams import recipes as texture_recipes
 from risk2mac_unity import open_unity_setup, prepare_unity
 from risk2mac_wwise_sdk import SOURCE_FILES, discover_wwise, open_wwise_setup, stage_sources
 from steam_install import install_destination, print_shortcut_instructions, register_shortcut, steam_root
@@ -139,7 +138,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--setup", choices=("unity", "wwise"), help="Open the official SDK setup and sign-in flow")
     parser.add_argument("--game", type=Path, help="Required for a build. Windows game folder containing Risk of Rain 2_Data")
-    parser.add_argument("--private", type=Path, help="Required for a build. Directory of local prerequisite files")
+    parser.add_argument("--private", type=Path, help="Optional compatibility inputs from an earlier local build")
     parser.add_argument("--output", type=Path, help="New .app path for a local build on a Mac filesystem")
     parser.add_argument("--arch", choices=("arm64", "x86_64"), help="Override the default host architecture")
     parser.add_argument("--dotnet", type=Path, help="Use a local dotnet executable with the .NET 8 SDK")
@@ -163,23 +162,26 @@ def main():
             open_wwise_setup()
             print("Sign in to Audiokinetic Launcher. In Unity > Offline Integration Files, export Wwise Unity Integration 2024.1.18 for macOS and Windows into Downloads. Then retry the build.")
         return
-    if not options.game or not options.private:
-        parser.error("A build requires --game and --private. Use --setup unity or --setup wwise to prepare an SDK.")
+    if not options.game:
+        parser.error("A build requires --game. Use --setup unity or --setup wwise to prepare an SDK.")
     if options.steam and options.output:
         parser.error("--steam selects the output from Steam's libraries. Omit --output and optionally supply --steam-library.")
     if not options.steam and (not options.output or options.steam_library):
         parser.error("Use --output for a local build. --steam-library requires --steam.")
     host = host_architecture()
     arch = options.arch or host
-    game, private, cache = (p.expanduser().resolve() for p in (options.game, options.private, options.tools))
+    game, cache = (p.expanduser().resolve() for p in (options.game, options.tools))
+    supplied = options.private.expanduser().resolve() if options.private else None
     steam = steam_root() if options.steam else None
     output = install_destination(steam, options.steam_library) if steam else options.output.expanduser().resolve()
     if not (game / (TITLE + "_Data") / "StreamingAssets").is_dir():
         raise ValueError(f"Windows game data not found in {game}")
-    if not private.is_dir():
-        raise ValueError(f"Private prerequisites directory not found: {private}")
-    if private == ROOT or ROOT in private.parents:
-        raise ValueError("Keep private prerequisites outside the Risk2Mac repository.")
+    if supplied is None and any(not (game / name).is_file() for name in (TITLE + ".exe", "UnityPlayer.dll")):
+        raise ValueError(f"Select the complete Windows installation with {TITLE}.exe and UnityPlayer.dll: {game}")
+    if supplied and not supplied.is_dir():
+        raise ValueError(f"Local compatibility input directory not found: {supplied}")
+    if supplied and supplied.is_relative_to(ROOT):
+        raise ValueError("Keep local compatibility inputs outside the Risk2Mac repository.")
     if output.suffix != ".app" or output.exists() or output.is_symlink():
         raise ValueError(f"Choose a new .app output path: {output}")
     # A Steam build may read an existing Windows install in its intended game
@@ -189,20 +191,24 @@ def main():
         raise ValueError("Choose build and tool cache paths outside the repository and the game.")
     if output.is_relative_to(ROOT):
         raise ValueError("Choose an output path outside the repository.")
-    if output.is_relative_to(private) or staging_parent.is_relative_to(private):
-        raise ValueError("Choose an output path outside the private inputs directory.")
+    if supplied and (output.is_relative_to(supplied) or staging_parent.is_relative_to(supplied)):
+        raise ValueError("Choose an output path outside the local compatibility inputs directory.")
     editor = find_unity_editor(options.unity_editor)
-    prepared_wwise = (private / "managed/AK.Wwise.Unity.API.dll").is_file()
-    private_sources = all((private / "wwise" / relative.name).is_file() for relative, _ in SOURCE_FILES.values())
-    needs_wwise_sources = not (prepared_wwise or private_sources)
-    wwise = discover_wwise(private, options.wwise, want_sources=needs_wwise_sources)
-    if wwise is None:
-        raise ValueError("Wwise Unity Integration 2024.1.18 was not found. Run ./build.sh --setup wwise or specify an existing vendor archive with --wwise.")
+    if not supplied and editor is None:
+        raise ValueError("This build requires the activated Unity Editor 2023.1.0f1. Use ./build.sh --setup unity.")
     staging_parent.mkdir(parents=True, exist_ok=True)
     run("/usr/bin/xcode-select", "-p")
     print(f"Host: {host}. Target: {arch}.\nOutput: {output}", flush=True)
     with tempfile.TemporaryDirectory(prefix=".risk2mac-", dir=staging_parent) as tmp:
         stage = Path(tmp)
+        private = supplied or stage / "inputs"
+        private.mkdir(exist_ok=True)
+        prepared_wwise = (private / "managed/AK.Wwise.Unity.API.dll").is_file()
+        private_sources = all((private / "wwise" / relative.name).is_file() for relative, _ in SOURCE_FILES.values())
+        needs_wwise_sources = not (prepared_wwise or private_sources)
+        wwise = discover_wwise(private, options.wwise, want_sources=needs_wwise_sources)
+        if wwise is None:
+            raise ValueError("Wwise Unity Integration 2024.1.18 was not found. Run ./build.sh --setup wwise or select an official archive with --wwise.")
         probe = stage / "permissions"
         probe.touch()
         probe.chmod(0o600)
@@ -220,26 +226,15 @@ def main():
         if unity_support:
             native_args.extend(("--unity-support", str(unity_support)))
         if options.steam:
+            run(sys.executable, str(ROOT / "scripts/prepare-steam.py"), "--private", str(private))
             native_args.append("--steam")
         run("/bin/bash", str(ROOT / "scripts/build-native.sh"), *common, "--arch", arch, *native_args)
-        print("[2/4] Game data", flush=True)
-        extra = ["--wwiser", str(options.wwiser.expanduser().resolve())] if options.wwiser else []
-        if editor:
-            extra.extend(("--unity-editor", str(editor)))
+        print("[2/4] Managed assemblies", flush=True)
         specified_dotnet = options.dotnet.expanduser().resolve() if options.dotnet else None
-        private_data = private / "assets/Contents/Resources/Data"
-        needs_texture_decoder = any(recipe.get("needs_dotnet") and not (private_data / name).is_file()
-                                    for name, recipe in texture_recipes().items())
-        dotnet = dotnet_sdk(host, cache, specified_dotnet) if needs_texture_decoder else None
-        if dotnet:
-            extra.extend(("--dotnet", dotnet))
+        dotnet = dotnet_sdk(host, cache, specified_dotnet)
         environment = dict(os.environ, DOTNET_NOLOGO="1", DOTNET_CLI_TELEMETRY_OPTOUT="1",
                            DOTNET_GENERATE_ASPNET_CERTIFICATE="false", DOTNET_ADD_GLOBAL_TOOLS_TO_PATH="false",
                            DOTNET_CLI_HOME=str(cache / "dotnet-home"), NUGET_PACKAGES=str(cache / "nuget"))
-        subprocess.run([sys.executable, str(ROOT / "scripts/build-assets.py"), *common, "--tools", str(cache), *extra],
-                       check=True, env=environment)
-        print("[3/4] Managed assemblies", flush=True)
-        dotnet = dotnet or dotnet_sdk(host, cache, specified_dotnet)
         managed_args = ["--steam"] if options.steam else []
         if unity_support:
             managed_args.extend(("--unity-support", str(unity_support)))
@@ -247,7 +242,15 @@ def main():
             managed_args.extend(("--unity-editor", str(editor)))
         if needs_wwise_sources:
             managed_args.extend(("--wwise-sources", str(sources)))
-        subprocess.run([sys.executable, str(ROOT / "scripts/build-managed.py"), *common, "--dotnet", dotnet, *managed_args],
+        subprocess.run([sys.executable, str(ROOT / "scripts/build-managed.py"), *common, "--dotnet", dotnet,
+                        "--tools", str(cache), *managed_args],
+                       check=True, env=environment)
+        print("[3/4] Game data", flush=True)
+        extra = ["--wwiser", str(options.wwiser.expanduser().resolve())] if options.wwiser else []
+        if editor:
+            extra.extend(("--unity-editor", str(editor)))
+        subprocess.run([sys.executable, str(ROOT / "scripts/build-assets.py"), *common, "--dotnet", dotnet,
+                        "--tools", str(cache), *extra],
                        check=True, env=environment)
         print("[4/4] App bundle and signature", flush=True)
         assemble_metadata(app, game)

@@ -4,13 +4,13 @@
 
 [Русская инструкция](README.ru.md)
 
-Risk2Mac assembles a local macOS build of Risk of Rain 2 from a matching Windows installation and privately supplied compatibility inputs. It selects the native `arm64` or `x86_64` slices of Unity Mono and Wwise, copies the original data, adjusts Addressables paths, and installs the locally prepared Metal assets. It compiles the compatibility helpers, applies the managed patches for storage and input, and signs the resulting `.app` locally. The game stores mutable settings outside its signed application bundle.
+Risk2Mac builds a native macOS app from your Windows installation of Risk of Rain 2 and the official Unity and Wwise SDKs. It selects the `arm64` or `x86_64` Unity Mono and Wwise binaries, adapts the original game data and shaders for Metal, compiles the port's compatibility code and signs the resulting `.app` locally. Saves and settings live outside the signed app bundle.
 
-**Build status.** This recipe targets the specific 1.5.0 data profile in the manifests. It requires the private preparation described below. The public recipe cannot recreate all Metal bundles, the recovered startup data or the early managed patches from a stock Windows install. The default build uses local profiles. An optional `--steam` build adds Steam integration. Intel packaging is supported, while gameplay on Intel hardware still needs verification.
+This recipe targets the specific 1.5.0 files identified by the [asset manifest](manifests/assets.json) and [managed input manifest](managed/inputs.json). Runtime checks have been performed on Apple Silicon. The builder can also target Intel, where gameplay still needs hardware testing.
 
 ## Steam integration
 
-The optional build uses the installed Steam client for game presence, owned DLC and Steam cloud profiles, with automatic local mode when Steam is unavailable. See [Steam setup and current multiplayer limitations](docs/steam.md) for the extra preparation and build commands. No Steam client libraries or game content are included in this repository.
+Steam mode uses the installed Steam client for game presence, cloud profiles and DLC ownership checks. To play an expansion, its content must be present in the build and Steam must verify that your account owns it. When Steam is unavailable, the game falls back to base-game play with a separate local profile. [Steam setup and multiplayer limitations](docs/steam.md)
 
 ## Performance
 
@@ -53,54 +53,52 @@ Reported gameplay FPS on **Verdant Falls** with the settings below.
 
 ## Requirements
 
-- A Mac running a [macOS version supported by the .NET 8 SDK](https://learn.microsoft.com/en-us/dotnet/core/install/macos), [Xcode Command Line Tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools), Python 3.9+ and at least 10 GB of free working space. The generated app targets macOS 11 or later with Metal. Use APFS or Mac OS Extended for the output and tool cache. The repository and private inputs can live on ExFAT.
-- Your own Windows game installation matching the pinned input hashes. Use the folder containing `Risk of Rain 2_Data`. The Windows executable is optional. The matching executable supplies the icon locally and the builder never executes it.
-- Unity **2023.1.0f1** macOS Mono Build Support and Wwise **2024.1.18** Unity Integration for macOS, obtained through the vendors. See [Native inputs](native/README.md) for the exact paths and the alternative private native export.
-- The compatible private game assets and managed assemblies listed in [assets.json](manifests/assets.json) and [inputs.json](managed/inputs.json). A newer Windows version or different files with the same version label can fail validation.
+- **Game files.** Copy your Windows installation of Risk of Rain 2 to a location your Mac can read. Select the folder containing `Risk of Rain 2.exe`, `UnityPlayer.dll` and `Risk of Rain 2_Data`, including its startup files, `Managed` and `StreamingAssets`. The builder checks the matched 1.5.0 files and uses the Windows executable to extract the app icon.
+- **Mac build tools.** Install Xcode Command Line Tools with `xcode-select --install` if needed. Use Python 3.9+ and a macOS version supported by the build SDKs. The generated app targets macOS 11 or later with Metal. Use APFS or Mac OS Extended for the output and tool cache. [Apple Command Line Tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools) · [.NET macOS requirements](https://learn.microsoft.com/en-us/dotnet/core/install/macos)
+- **Unity.** Sign in to Unity Hub, install the full **Unity Editor 2023.1.0f1** with Mac Mono Build Support, and activate your Editor license. The build uses it to regenerate Unity startup data and Metal resources. [Unity Hub setup](https://docs.unity.com/en-us/hub/install-hub-win-mac) · [Unity 2023.1.0f1](https://unity.com/releases/editor/whats-new/2023.1.0f1)
+- **Wwise.** Sign in to Audiokinetic Launcher. Under **Unity → Offline Integration Files**, export **Wwise Unity Integration 2024.1.18** for both macOS and Windows into Downloads. The builder finds and verifies `Unity.Mac.tar.xz` and `Unity.Windows.tar.xz` there. [Wwise setup and custom SDK paths](native/README.md)
 
-The builder uses an installed .NET 8 SDK if available. Otherwise it downloads [Microsoft's .NET 8.0.427 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) for the host CPU and verifies its SHA-512. The managed build restores [Mono.Cecil 0.11.6](https://www.nuget.org/packages/Mono.Cecil/0.11.6) from NuGet. Keep the SDK and NuGet cache outside the repository.
-
-## Prepare private inputs
-
-Keep `PRIVATE` in a separate directory outside the repository. The manifests specify the exact filenames and hashes. The `kind: private` asset entries go under `PRIVATE/assets/Contents/Resources/Data/`. Converted bank entries go there too if using the preconverted banks. Entries marked `private`, `storage` and `wwise` in the managed manifest go under `PRIVATE/managed/`. `storage` entries take the **input** hash from the manifest, since the builder applies the storage patch. For Wwise, the supported official source pair can replace the private API assembly. See [Managed inputs](managed/README.md) and [Asset inputs](docs/assets.md) for the exact alternatives.
-
-If you already have the matching reviewed Mac build and its pre-storage `RoR2.dll` and `ModLoader.dll` backups, the following commands prepare an owner-only local kit. They export just the files the recipe needs. `PRE_STORAGE` points to the folder with those two backups. Use a new `PRIVATE` directory and start these commands from the Risk2Mac repository.
-
-```bash
-PORT="/Applications/Risk of Rain 2.app"
-PRE_STORAGE="/path/to/pre-storage-backup"
-PRIVATE="$HOME/Risk2Mac-Private/Prerequisites"
-
-python3 scripts/build-assets.py --export-private "$PORT" --private "$PRIVATE" --include-banks
-python3 scripts/build-managed-inputs.py --port-app "$PORT" --pre-storage "$PRE_STORAGE" --private "$PRIVATE"
-bash scripts/build-native-inputs.sh --port-app "$PORT" --private "$PRIVATE"
-```
-
-From a matching Windows installation, `build.sh` can generate startup data, convert 247 sound banks, prepare managed DLLs and rebuild 83 Addressables shader bundles. It can download the official Unity Mac Mono component into its cache. The complete Unity Editor supplies the Mono profile and generates the stock splash, startup textures and Metal shaders when needed. The builder finds Wwise offline archives exported into Downloads and verifies them before use. See the input guides above for the remaining prepared files.
+The first build needs an internet connection for tools and source packages. The builder uses an installed .NET 8 SDK or downloads and verifies Microsoft's SDK for your Mac. It generates the compatible game data and managed assemblies in the build directory from your game files and the vendor tools. Keep the tool cache outside the repository and game folder.
 
 ## Build
 
-Use **Risk2Mac Builder** for a graphical setup. Download the universal macOS disk image from [Releases](https://github.com/TsiFroviK/Risk2Mac/releases), drag the builder into Applications, then select the Windows game folder and the remaining prerequisites under **Local port files**. The app runs the same conversions and input checks as `build.sh`. Use **Advanced inputs** to select custom paths for Unity Editor, Mac Build Support, Wwise, wwiser, a .NET SDK or the tool cache. Install Xcode Command Line Tools before building.
+### Build with the graphical app
 
-The **Set up Unity** and **Set up Wwise** buttons open the vendors’ own setup and sign-in flows. Use `bash build.sh --setup unity` or `bash build.sh --setup wwise` to do the same from Terminal. [SDK setup instructions](native/README.md)
+1. Open the **Risk2Mac Builder** universal DMG and move the Builder into Applications. [Releases](https://github.com/TsiFroviK/Risk2Mac/releases)
+2. Select your **Windows game folder**. Use **Set up Unity** and **Set up Wwise** to open the vendors’ setup and sign-in screens if needed. For a nonstandard SDK location, select it under **Advanced inputs**.
+3. Leave **Steam integration** on to build inside a registered Steam library. For a standalone build, turn it off and select an **Output folder**.
+4. Click **Build**. When it finishes, use **Show in Finder** to locate `Risk of Rain 2.app` or launch it from the Steam shortcut. **Show log** opens the build log.
 
 The Builder checks for its own updates automatically. Choose **Update** to download the DMG, install the new Builder in its current folder, and restart it. **Later** postpones the update. **Don't remind me** turns off automatic checks, which you can re-enable in **Settings**.
 
-With Steam integration enabled, choose a registered Steam library. The builder puts the app in that library and adds a local Steam shortcut when Steam is closed. The store version advertises Windows, so the native app appears as a separate entry in the Mac library. See [Steam setup](docs/steam.md).
+Steam mode adds **Risk of Rain 2 (Risk2Mac)** as a separate local shortcut. Close Steam before the build finishes for automatic registration, or close it afterward and use **Add to Steam** in the Builder. [Steam setup](docs/steam.md)
 
 ### Build from the command line
 
-Install Command Line Tools with `xcode-select --install` if needed. Open Terminal, enter the Risk2Mac folder and set the three paths to your actual locations.
+Clone Risk2Mac and open its folder in Terminal. The setup commands open the vendors’ installation and sign-in screens. Complete the SDK steps above before starting a build.
+
+```bash
+git clone https://github.com/TsiFroviK/Risk2Mac.git
+cd Risk2Mac
+bash build.sh --setup unity
+bash build.sh --setup wwise
+```
+
+For a standalone app with a local profile, set the game path and a new output path.
 
 ```bash
 GAME="/path/to/Windows/Risk of Rain 2"
-PRIVATE="/path/to/Prerequisites"
 OUTPUT="$HOME/Risk2Mac Builds/Risk of Rain 2.app"
-
-python3 scripts/build-assets.py --game "$GAME" --private "$PRIVATE" --tools "$HOME/Library/Caches/Risk2Mac" --check
-python3 scripts/build-managed.py --game "$GAME" --private "$PRIVATE" --check-inputs
-bash build.sh --game "$GAME" --private "$PRIVATE" --output "$OUTPUT"
+bash build.sh --game "$GAME" --output "$OUTPUT"
 ```
+
+For Steam, use the same game path. The builder chooses the output inside a registered Steam library. Use `--steam-library "/path/to/SteamLibrary"` to select a registered library explicitly.
+
+```bash
+bash build.sh --game "$GAME" --steam
+```
+
+### Advanced options
 
 For an ExFAT SSD, you can keep the output on the same drive using an APFS disk image. Create a new image and mount it, then set `OUTPUT` and the optional `--tools` cache path inside the mounted volume.
 
@@ -108,11 +106,13 @@ For an ExFAT SSD, you can keep the output on the same drive using an APFS disk i
 hdiutil create -size 24g -type SPARSEBUNDLE -fs APFS -volname Risk2Mac-Build \
   "/Volumes/SSD/Risk2Mac Build.sparsebundle"
 hdiutil attach "/Volumes/SSD/Risk2Mac Build.sparsebundle"
-bash build.sh --game "$GAME" --private "$PRIVATE" \
+bash build.sh --game "$GAME" \
   --output "/Volumes/Risk2Mac-Build/Risk of Rain 2.app" \
   --tools "/Volumes/Risk2Mac-Build/tools"
 ```
 
 The output path must be new. The build selects the architecture automatically. For explicit packaging, pass `--arch arm64` or `--arch x86_64`. `--dotnet /path/to/dotnet` selects an installed SDK. `--wwiser /path/to/wwiser` selects a local parser checkout for bank conversion. Use `--unity-editor`, `--unity-support` and `--wwise` for official components in custom locations.
+
+The CLI also accepts `--private /path/to/inputs` if you already have compatible outputs from a previous local build. [Asset inputs](docs/assets.md) · [Managed inputs](managed/README.md) · [Native inputs](native/README.md)
 
 Open the resulting `.app` in Finder. On startup, the app writes Unity and launcher logs to `~/Library/Logs/Risk Of Rain 2/`. The `Latest-Unity.log` and `Latest-Launcher.log` links point to the latest run. Configuration, mod lists, run reports and generated caches use `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.

@@ -45,7 +45,6 @@ private struct BuilderView: View {
     @ObservedObject var build: BuildModel
     @ObservedObject var updates: BuilderUpdates
     @AppStorage("game") private var game = ""
-    @AppStorage("prerequisites") private var prerequisites = ""
     @AppStorage("destination") private var destination = ""
     @AppStorage("steam") private var steam = true
     @AppStorage("steamLibrary") private var steamLibrary = ""
@@ -95,15 +94,7 @@ private struct BuilderView: View {
                         Text(tr("Build Risk of Rain 2", "Сборка Risk of Rain 2"))
                             .font(.system(size: 25, weight: .semibold))
                             .accessibilityAddTraits(.isHeader)
-                        VStack(alignment: .leading, spacing: 12) {
-                            PathRow(title: tr("Windows game folder", "Папка игры для Windows"), path: $game)
-                            PathRow(title: tr("Local port files", "Локальные файлы порта"), path: $prerequisites,
-                                    hint: "Prerequisites")
-                            Text(tr("Choose the folder with the remaining converted Unity assets and port assemblies.",
-                                    "Укажите папку с оставшимися преобразованными ресурсами Unity и сборками порта."))
-                                .font(.caption).foregroundColor(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
+                        PathRow(title: tr("Windows game folder", "Папка игры для Windows"), path: $game)
                         Divider()
                         Toggle(tr("Steam integration", "Интеграция Steam"), isOn: $steam)
                             .toggleStyle(SwitchToggleStyle())
@@ -184,8 +175,7 @@ private struct BuilderView: View {
                         Spacer()
                         Button(tr("Build", "Собрать"), action: beginBuild)
                             .keyboardShortcut(.defaultAction)
-                            .disabled(busy || game.trimmed.isEmpty || prerequisites.trimmed.isEmpty
-                                      || (!steam && destination.trimmed.isEmpty))
+                            .disabled(busy || game.trimmed.isEmpty || (!steam && destination.trimmed.isEmpty))
                     }
                 }.padding(.horizontal, 24).padding(.vertical, 15)
             }
@@ -199,9 +189,8 @@ private struct BuilderView: View {
     }
 
     private func beginBuild() {
-        guard !busy, !game.trimmed.isEmpty, !prerequisites.trimmed.isEmpty,
-              steam || !destination.trimmed.isEmpty else { return }
-        var arguments = ["--game", game.trimmed, "--private", prerequisites.trimmed]
+        guard !busy, !game.trimmed.isEmpty, steam || !destination.trimmed.isEmpty else { return }
+        var arguments = ["--game", game.trimmed]
         let output: URL?
         if steam {
             arguments.append("--steam")
@@ -220,7 +209,7 @@ private struct BuilderView: View {
         arguments.appendPath("--dotnet", dotnet)
         arguments.appendPath("--tools", tools)
         arguments.appendPath("--arch", arch)
-        build.start(arguments: arguments, steam: steam, prerequisites: prerequisites.trimmed, output: output)
+        build.start(arguments: arguments, steam: steam, output: output)
     }
 }
 
@@ -532,7 +521,7 @@ private final class BuildModel: ObservableObject {
         }
     }
 
-    func start(arguments: [String], steam: Bool, prerequisites: String, output: URL?) {
+    func start(arguments: [String], steam: Bool, output: URL?) {
         guard !running, let recipe = Bundle.main.resourceURL?.appendingPathComponent("Recipe") else { return }
         running = true
         failed = false
@@ -552,9 +541,6 @@ private final class BuildModel: ObservableObject {
                 DispatchQueue.main.async { self.logURL = logPath }
 
                 try self.run("/usr/bin/xcode-select", ["-p"], recipe: recipe, journal: journal) { _ in }
-                if steam {
-                    try self.run("/usr/bin/python3", ["-u", "scripts/prepare-steam.py", "--private", prerequisites], recipe: recipe, journal: journal) { _ in }
-                }
                 var app = output
                 var registered = false
                 try self.run("/usr/bin/python3", ["-u", "scripts/build.py"] + arguments, recipe: recipe, journal: journal) { line in
@@ -564,8 +550,8 @@ private final class BuildModel: ObservableObject {
                     }
                     if line.hasPrefix("["), let phase = line.dropFirst().first?.wholeNumberValue,
                        (1...4).contains(phase), line.dropFirst(2).hasPrefix("/4]") {
-                        let titles = [tr("Native runtime", "Нативная среда"), tr("Game data", "Данные игры"),
-                                      tr("Managed assemblies", "Сборки .NET"), tr("App bundle and signature", "Приложение и подпись")]
+                        let titles = [tr("Native runtime", "Нативная среда"), tr("Managed assemblies", "Сборки .NET"),
+                                      tr("Game data", "Данные игры"), tr("App bundle and signature", "Приложение и подпись")]
                         DispatchQueue.main.async {
                             self.progress = Double(phase - 1) / 4.0
                             self.status = "\(phase) / 4  ·  \(titles[phase - 1])"

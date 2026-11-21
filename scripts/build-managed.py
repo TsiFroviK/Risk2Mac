@@ -16,6 +16,11 @@ from risk2mac_ai_navigation import (
     REFERENCE_SHA256 as AI_NAVIGATION_REFERENCES,
     build_ai_navigation, find_ai_navigation_analyzer,
 )
+from risk2mac_assembly_csharp import (
+    INPUT_SHA256 as ASSEMBLY_CSHARP_INPUT_SHA256, OUTPUT_NAME as ASSEMBLY_CSHARP,
+    OUTPUT_SHA256 as ASSEMBLY_CSHARP_SHA256, WINDOWS_REFERENCES as ASSEMBLY_CSHARP_WINDOWS,
+    build_assembly_csharp,
+)
 from risk2mac_memory_profiler import (
     OUTPUT_NAME as MEMORY_PROFILER, OUTPUT_SHA256 as MEMORY_PROFILER_SHA256,
     REFERENCE_SHA256 as MEMORY_PROFILER_REFERENCES, build_memory_profiler,
@@ -32,6 +37,8 @@ UNITY_CONTENTS = Path("/Applications/Unity/Hub/Editor") / UNITY_VERSION / "Unity
 UNITY_MAC_MODULE = Path("PlaybackEngines/MacStandaloneSupport")
 UNITY_MAC_MONO_PROFILE = Path("MonoBleedingEdge/lib/mono/unityjit-macos")
 UNSAFE_ASSEMBLY = "System.Runtime.CompilerServices.Unsafe.dll"
+GAME_ASSEMBLY = "RoR2.dll"
+OFFLINE_PLATFORM = "RoR2Arm64.OfflinePlatform.dll"
 
 
 def sha256(path):
@@ -53,9 +60,8 @@ def assert_file(path, expected):
 
 def accepted_input_hashes(entry):
     baseline = entry.get("input_sha256", entry["sha256"])
-    if "generated_sha256" in entry:
-        return baseline, entry["generated_sha256"]
-    return (baseline,)
+    generated = entry.get("generated_input_sha256", entry.get("generated_sha256"))
+    return (baseline, generated) if generated is not None else (baseline,)
 
 
 def read_recipe():
@@ -140,6 +146,11 @@ def check_inputs(windows, private, recipe, private_sources, plan, compatibility,
 
     for name, expected in recipe["windows_anchors"].items():
         check(windows / name, expected)
+    if ASSEMBLY_CSHARP in vendor_builds:
+        check(windows / ASSEMBLY_CSHARP, ASSEMBLY_CSHARP_INPUT_SHA256)
+        for name in ASSEMBLY_CSHARP_WINDOWS:
+            if not (windows / name).is_file():
+                errors.append(f"Missing Assembly-CSharp reference: {windows / name}")
 
     wwise = wwise_directory or private / "wwise"
     wwise_sources = recipe["optional_wwise_sources"]
@@ -161,7 +172,8 @@ def check_inputs(windows, private, recipe, private_sources, plan, compatibility,
         elif entry["source"] == "windows":
             check(windows / name, entry["sha256"])
         elif entry["source"] == "storage":
-            check(private_sources[name], entry["input_sha256"])
+            if name != GAME_ASSEMBLY or not needs_preparation(private_sources[name]):
+                check(private_sources[name], accepted_input_hashes(entry))
         elif entry["source"] == "private":
             check(private_sources[name], accepted_input_hashes(entry))
         elif entry["source"] == "wwise" and not compile_wwise:
@@ -216,7 +228,7 @@ def run_patcher(dotnet, sdk, name, scratch, *args):
 
 
 def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, private_sources, plan, compatibility,
-                     wwise_directory=None, vendor_builds=None, editor=None):
+                     wwise_directory=None, vendor_builds=None, editor=None, tool_cache=None):
     vendor_builds = vendor_builds or {}
     csc, sdk = locate_csc(dotnet)
     output = scratch / "Managed"
@@ -235,7 +247,7 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
                     generated, *compatibility)
         private_sources = {**private_sources, **{name: generated / name for name in compatibility}}
     for name, entry in recipe["files"].items():
-        if name in vendor_builds:
+        if name in vendor_builds or (name == GAME_ASSEMBLY and needs_preparation(private_sources[name])):
             continue
         if entry["source"] == "windows":
             shutil.copyfile(windows / name, output / name)
@@ -248,6 +260,8 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
     if AI_NAVIGATION in vendor_builds:
         references = {name: output / name for name in AI_NAVIGATION_REFERENCES}
         build_ai_navigation(dotnet, csc, editor, references, output / AI_NAVIGATION, scratch)
+    if ASSEMBLY_CSHARP in vendor_builds:
+        build_assembly_csharp(dotnet, csc, editor, windows, output, output / ASSEMBLY_CSHARP, scratch, tool_cache)
     if MEMORY_PROFILER in vendor_builds:
         references = {name: windows / name for name in MEMORY_PROFILER_REFERENCES}
         references["UnityEngine.CoreModule.dll"] = output / "UnityEngine.CoreModule.dll"
@@ -270,12 +284,24 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
                  "RoR2.dll", "LegacyResourcesAPI.dll")
     compile_dll(dotnet, csc, [*(windows / name for name in solo_refs), dpad],
                 [SOURCE / "helpers" / name for name in solo_files], output / "RoR2Arm64.ManagedSolo.dll")
+    offline = output / OFFLINE_PLATFORM
+    offline_sources = [SOURCE / "game" / name for name in ("OfflineNetworkManager.cs", "OfflinePlatform.cs", "OfflineProviders.cs")]
+    compile_dll(dotnet, csc, sorted(windows.glob("*.dll"), key=lambda path: path.name.casefold()), offline_sources, offline)
+    assert_file(offline, recipe["files"][OFFLINE_PLATFORM]["sha256"])
+    if not (output / GAME_ASSEMBLY).is_file():
+        generated_game = scratch / "game-patched"
+        print("Preparing the game assembly from the Windows installation", flush=True)
+        run_patcher(dotnet, sdk, "game", scratch, windows / GAME_ASSEMBLY,
+                    output / "RoR2Arm64.ManagedSolo.dll", offline, generated_game)
+        assert_file(generated_game / GAME_ASSEMBLY, recipe["files"][GAME_ASSEMBLY]["generated_input_sha256"])
+        (generated_game / GAME_ASSEMBLY).rename(output / GAME_ASSEMBLY)
 
     run_patcher(dotnet, sdk, "dpad", scratch, windows / "Rewired_Core.dll", dpad, output / "Rewired_Core.dll")
     patched_storage = scratch / "storage-patched"
     run_patcher(dotnet, sdk, "storage", scratch, output, storage, patched_storage)
     for name in ("RoR2.dll", "ModLoader.dll"):
         (patched_storage / name).replace(output / name)
+    assert_file(output / GAME_ASSEMBLY, recipe["files"][GAME_ASSEMBLY]["sha256"])
 
     if compile_wwise:
         wwise_refs = (*RUNTIME_REFS, "netstandard.dll", *UNITY_REFS,
@@ -313,8 +339,11 @@ def install(args):
                      if needs_preparation(private_sources[name])}
     wwise_directory = args.wwise_sources.expanduser().resolve(strict=True) if args.wwise_sources else None
     vendor_builds = {}
-    if needs_preparation(private_sources[AI_NAVIGATION]) and find_ai_navigation_analyzer(editor):
-        vendor_builds[AI_NAVIGATION] = AI_NAVIGATION_SHA256
+    if find_ai_navigation_analyzer(editor):
+        if needs_preparation(private_sources[AI_NAVIGATION]):
+            vendor_builds[AI_NAVIGATION] = AI_NAVIGATION_SHA256
+        if needs_preparation(private_sources[ASSEMBLY_CSHARP]):
+            vendor_builds[ASSEMBLY_CSHARP] = ASSEMBLY_CSHARP_SHA256
     if needs_preparation(private_sources[MEMORY_PROFILER]):
         vendor_builds[MEMORY_PROFILER] = MEMORY_PROFILER_SHA256
     compile_wwise = check_inputs(windows, private, recipe, private_sources, plan, compatibility, wwise_directory,
@@ -338,7 +367,8 @@ def install(args):
     with tempfile.TemporaryDirectory(prefix="risk2mac-managed-", dir=app.parent) as directory:
         scratch = Path(directory)
         output = build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise,
-                                  private_sources, plan, compatibility, wwise_directory, vendor_builds, editor)
+                                  private_sources, plan, compatibility, wwise_directory, vendor_builds, editor,
+                                  args.tools.expanduser().resolve())
         if args.steam:
             install_steam(output, scratch, dotnet)
         managed.parent.mkdir(parents=True, exist_ok=True)
@@ -380,6 +410,8 @@ def main():
     parser.add_argument("--unity-support", type=Path, help=f"Official Unity {UNITY_VERSION} MacStandaloneSupport directory")
     parser.add_argument("--unity-editor", type=Path, help=f"Unity {UNITY_VERSION} Editor app or executable providing the Mono runtime profile")
     parser.add_argument("--wwise-sources", type=Path, help="Directory with the verified official Wwise C# source pair")
+    parser.add_argument("--tools", type=Path, default=Path.home() / "Library/Caches/Risk2Mac",
+                        help="Local SDK and utility download cache")
     parser.add_argument("--dotnet", default="dotnet")
     parser.add_argument("--check-inputs", action="store_true")
     parser.add_argument("--steam", action="store_true")
