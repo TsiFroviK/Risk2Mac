@@ -183,7 +183,7 @@ private struct BuilderView: View {
         .frame(idealWidth: 780, idealHeight: 600)
         .onAppear { updates.attachWindow(windowID) }
         .onDisappear { updates.detachWindow(windowID) }
-        .sheet(isPresented: updatePresented) {
+        .sheet(isPresented: updatePresented, onDismiss: updates.restartAfterDismissal) {
             UpdateSheet(updates: updates, build: build)
         }
     }
@@ -332,10 +332,11 @@ private final class BuilderUpdates: ObservableObject {
     private var windows: [UUID] = []
     private var timer: Timer?
     private var checkToken: UUID?
+    private var restartPending = false
 
     var installing: Bool {
         if case .installing? = dialog { return true }
-        return false
+        return restartPending
     }
 
     func attachWindow(_ id: UUID) {
@@ -372,7 +373,7 @@ private final class BuilderUpdates: ObservableObject {
     }
 
     func check(showFailure: Bool = false) {
-        guard checksEnabled, !checking, dialog == nil else { return }
+        guard checksEnabled, !checking, !installing, dialog == nil else { return }
         postponeAutomaticCheck()
         let token = UUID()
         checkToken = token
@@ -408,13 +409,20 @@ private final class BuilderUpdates: ObservableObject {
                 guard let self = self else { return }
                 switch result {
                 case .success:
-                    self.dialog = .installing(1)
-                    NSApp.terminate(nil)
+                    // AppKit rejects termination while the update sheet is still modal.
+                    self.restartPending = true
+                    self.dialog = nil
+                    if self.sheetWindow == nil { self.restartAfterDismissal() }
                 case let .failure(error):
                     self.dialog = .failure(error.localizedDescription, release)
                 }
             }
         })
+    }
+
+    func restartAfterDismissal() {
+        guard restartPending else { return }
+        NSApp.terminate(nil)
     }
 
     func dismiss() {
