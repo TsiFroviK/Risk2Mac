@@ -382,8 +382,9 @@ def install_steam(managed, scratch, dotnet):
     references = (*RUNTIME_REFS, "netstandard.dll", "UnityEngine.CoreModule.dll",
                   "UnityEngine.UNETModule.dll", "com.unity.multiplayer-hlapi.Runtime.dll",
                   "RoR2Arm64.ManagedSolo.dll", "RoR2.dll", "Facepunch.Steamworks.dll")
+    steam_sources = ("SteamAchievements.cs", "SteamCompatibility.cs", "SteamExternalTransport.cs")
     compile_dll(dotnet, csc, [managed / name for name in references],
-                [SOURCE / "steam" / name for name in ("SteamCompatibility.cs", "SteamExternalTransport.cs")], helper)
+                [SOURCE / "steam" / name for name in steam_sources], helper)
     patched = scratch / "steam-patched"
     run_patcher(dotnet, sdk, "steam", scratch, managed, helper, patched)
     report = json.loads((patched / "patch-report.json").read_text(encoding="utf-8"))

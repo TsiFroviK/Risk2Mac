@@ -124,3 +124,62 @@ int Risk2MacSteamInitialize(void)
     }
     return available;
 }
+
+static void *achievement_stats(void)
+{
+    if (available != 1) return NULL;
+    /* Pair the versioned getter and flat calls from the same installed library. */
+    const char *getters[] = { "SteamAPI_SteamUserStats_v013", "SteamAPI_SteamUserStats_v012" };
+    for (size_t i = 0; i < sizeof(getters) / sizeof(getters[0]); ++i) {
+        void *(*get)(void) = (void *(*)(void))dlsym(steam_api, getters[i]);
+        if (get) return get();
+    }
+    return NULL;
+}
+
+enum AchievementResult {
+    AchievementRetry,
+    AchievementAlreadyUnlocked,
+    AchievementStaged,
+    AchievementUnknown,
+};
+
+int Risk2MacSteamStageAchievement(const char *name)
+{
+    void *stats = achievement_stats();
+    if (!stats) return AchievementRetry;
+
+    bool (*get)(void *, const char *, bool *) =
+        (bool (*)(void *, const char *, bool *))dlsym(steam_api, "SteamAPI_ISteamUserStats_GetAchievement");
+    bool (*set)(void *, const char *) =
+        (bool (*)(void *, const char *))dlsym(steam_api, "SteamAPI_ISteamUserStats_SetAchievement");
+    if (!get || !set) return AchievementRetry;
+
+    bool unlocked = false;
+    if (get(stats, name, &unlocked)) {
+        if (unlocked) return AchievementAlreadyUnlocked;
+        return set(stats, name) ? AchievementStaged : AchievementRetry;
+    }
+
+    /* Ignore mod-only IDs once Steam has loaded its achievement catalogue. */
+    uint32_t (*count)(void *) =
+        (uint32_t (*)(void *))dlsym(steam_api, "SteamAPI_ISteamUserStats_GetNumAchievements");
+    const char *(*achievement_name)(void *, uint32_t) =
+        (const char *(*)(void *, uint32_t))dlsym(steam_api, "SteamAPI_ISteamUserStats_GetAchievementName");
+    uint32_t total = count ? count(stats) : 0;
+    if (!total || !achievement_name) return AchievementRetry;
+    for (uint32_t i = 0; i < total; ++i) {
+        const char *entry = achievement_name(stats, i);
+        if (!entry || !*entry || strcmp(entry, name) == 0) return AchievementRetry;
+    }
+    return AchievementUnknown;
+}
+
+int Risk2MacSteamStoreAchievements(void)
+{
+    void *stats = achievement_stats();
+    if (!stats) return 0;
+    bool (*store)(void *) =
+        (bool (*)(void *))dlsym(steam_api, "SteamAPI_ISteamUserStats_StoreStats");
+    return store && store(stats);
+}

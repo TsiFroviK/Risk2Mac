@@ -16,6 +16,7 @@ resolver.AddSearchDirectory(Path.GetDirectoryName(helperPath)!);
 var reader = new ReaderParameters { AssemblyResolver = resolver, InMemory = true };
 using var helper = AssemblyDefinition.ReadAssembly(helperPath, reader);
 var bridge = helper.MainModule.GetType("Risk2Mac.SteamCompatibility");
+var achievements = helper.MainModule.GetType("Risk2Mac.SteamAchievements");
 Directory.CreateDirectory(output);
 var report = new List<object>();
 var expected = new Dictionary<string, string> {
@@ -33,6 +34,30 @@ foreach (string name in new[] { "RoR2.dll", "RoR2Arm64.OfflinePlatform.dll", "Ro
     var changes = new List<string>();
     if (name == "RoR2.dll")
     {
+        var addAchievement = module.GetType("RoR2.AchievementSystemSteam").Methods.Single(m => m.Name == "AddAchievement");
+        var trigger = addAchievement.Body.Instructions.Single(i => i.OpCode == OpCodes.Callvirt &&
+            i.Operand is MethodReference m && m.DeclaringType.FullName == "Facepunch.Steamworks.Achievements" && m.Name == "Trigger");
+        if (addAchievement.IsStatic || addAchievement.ReturnType.FullName != "System.Void" ||
+            addAchievement.Parameters.Count != 1 || addAchievement.Parameters[0].ParameterType.FullName != "System.String" ||
+            trigger.Next?.OpCode != OpCodes.Pop)
+            throw new InvalidDataException("Unexpected Steam achievement dispatch");
+        addAchievement.Body = new MethodBody(addAchievement);
+        var dispatch = addAchievement.Body.GetILProcessor();
+        dispatch.Emit(OpCodes.Ldarg_1);
+        dispatch.Emit(OpCodes.Call, module.ImportReference(achievements.Methods.Single(m => m.Name == "Enqueue")));
+        dispatch.Emit(OpCodes.Ret);
+        changes.Add(addAchievement.FullName);
+
+        var update = module.GetType("RoR2.SteamworksClientManager").Methods.Single(m => m.Name == "Update");
+        var callbackPump = update.Body.Instructions.Single(i => i.OpCode == OpCodes.Callvirt &&
+            i.Operand is MethodReference m && m.DeclaringType.FullName == "Facepunch.Steamworks.BaseSteamworks" && m.Name == "Update");
+        if (callbackPump.Next?.OpCode != OpCodes.Ret)
+            throw new InvalidDataException("Unexpected Steam callback update");
+        var pump = update.Body.GetILProcessor();
+        pump.InsertAfter(callbackPump, pump.Create(OpCodes.Call,
+            module.ImportReference(achievements.Methods.Single(m => m.Name == "Flush"))));
+        changes.Add(update.FullName);
+
         var constructor = module.GetType("RoR2.SteamworksClientManager").Methods.Single(m => m.IsConstructor && !m.IsStatic);
         var clientAllocations = constructor.Body.Instructions.Where(i => i.OpCode == OpCodes.Newobj &&
             i.Operand is MethodReference m && m.DeclaringType.FullName == "Facepunch.Steamworks.Client").ToArray();
