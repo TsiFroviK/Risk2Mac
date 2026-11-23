@@ -625,6 +625,10 @@ private final class BuildModel: ObservableObject {
 
     private func localizedFailure(_ error: Error) -> String {
         let detail = error.localizedDescription
+        if detail.contains("do not match the supported Steam depot") {
+            return tr("This Windows build is incompatible. Open the build log for the Steam download command, then select the downloaded depot folder.",
+                      "Эта версия игры для Windows не подходит. В журнале сборки есть команда для Steam. После скачивания выберите папку полученного депо.")
+        }
         if detail.contains("--setup unity") { return VendorSDK.unity.instructions }
         if detail.contains("--setup wwise") { return VendorSDK.wwise.instructions }
         if detail.contains("Quit Steam") {
