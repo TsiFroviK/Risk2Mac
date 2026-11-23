@@ -55,10 +55,24 @@ Reported gameplay FPS on **Verdant Falls** with the settings below.
 
 - **Game files.** Copy your Windows installation of Risk of Rain 2 to a location your Mac can read. Select the folder containing `Risk of Rain 2.exe`, `UnityPlayer.dll` and `Risk of Rain 2_Data`, including its startup files, `Managed` and `StreamingAssets`. The builder checks the matched 1.5.0 files and uses the Windows executable to extract the app icon.
 - **Mac build tools.** Install Xcode Command Line Tools with `xcode-select --install` if needed. Use Python 3.9+ and a macOS version supported by the build SDKs. The generated app targets macOS 11 or later with Metal. Use APFS or Mac OS Extended for the output and tool cache. [Apple Command Line Tools](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools) · [.NET macOS requirements](https://learn.microsoft.com/en-us/dotnet/core/install/macos)
-- **Unity.** Sign in to Unity Hub, install the full **Unity Editor 2023.1.0f1** with Mac Mono Build Support, and activate your Editor license. The build uses it to regenerate Unity startup data and Metal resources. [Unity Hub setup](https://docs.unity.com/en-us/hub/install-hub-win-mac) · [Unity 2023.1.0f1](https://unity.com/releases/editor/whats-new/2023.1.0f1)
-- **Wwise.** Sign in to Audiokinetic Launcher. Under **Unity → Offline Integration Files**, export **Wwise Unity Integration 2024.1.18** for both macOS and Windows into Downloads. The builder finds and verifies `Unity.Mac.tar.xz` and `Unity.Windows.tar.xz` there. [Wwise setup and custom SDK paths](native/README.md)
+- **Unity.** Sign in to Unity Hub, install the full **Unity Editor 2023.1.0f1** with Mac Mono Build Support, and activate your Editor license. The build uses it to regenerate Unity startup data and Metal resources. For a custom Editor location, select it in Builder or pass `--unity-editor`. If its Mac support DLLs differ from the supported runtime, the builder can fetch the pinned Unity module separately. [Unity Hub setup](https://docs.unity.com/en-us/hub/install-hub-win-mac) · [Unity 2023.1.0f1](https://unity.com/releases/editor/whats-new/2023.1.0f1)
+- **Wwise.** Sign in to Audiokinetic Launcher. Under **Unity → Offline Integration Files**, export **Wwise Unity Integration 2024.1.18** for both macOS and Windows into Downloads. The builder finds and verifies `Unity.Mac.tar.xz` and `Unity.Windows.tar.xz` there. The builder also accepts a custom export folder containing both archives via **Advanced inputs** or `--wwise`. [Wwise setup and custom SDK paths](native/README.md)
 
 The first build needs an internet connection for tools and source packages. The builder uses an installed .NET 8 SDK or downloads and verifies Microsoft's SDK for your Mac. It generates the compatible game data and managed assemblies in the build directory from your game files and the vendor tools. Keep the tool cache outside the repository and game folder.
+
+### Get the supported Windows files on a Mac
+
+For a Steam copy, use Windows depot `632361`, manifest `6263328667188910512` (October 8, 2026). Steam build `25921972` from October 14 contains a different game assembly and Addressables catalog. Risk2Mac checks the selected game before preparing the SDKs.
+
+1. Sign in to the Steam account that owns the game and open `steam://open/console` on the Mac.
+2. If you previously downloaded this depot, move that download's `depot_632361` folder aside so Steam starts with an empty destination. Keep the installed game and its saves in place.
+3. Enter the following command in Steam's **Console** tab and wait for **Depot download complete**.
+
+   ```text
+   download_depot 632360 632361 6263328667188910512
+   ```
+
+4. Select the completed `depot_632361` directory in Builder or pass it to `--game`. Steam prints its full path. One macOS client location is `~/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/MacOS/steamapps/content/app_632360/depot_632361`. You can use the fresh download directly without launching the game on Windows.
 
 ## Build
 
@@ -116,3 +130,5 @@ The output path must be new. The build selects the architecture automatically. F
 The CLI also accepts `--private /path/to/inputs` if you already have compatible outputs from a previous local build. [Asset inputs](docs/assets.md) · [Managed inputs](managed/README.md) · [Native inputs](native/README.md)
 
 Open the resulting `.app` in Finder. On startup, the app writes Unity and launcher logs to `~/Library/Logs/Risk Of Rain 2/`. The `Latest-Unity.log` and `Latest-Launcher.log` links point to the latest run. Configuration, mod lists, run reports and generated caches use `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.
+
+If loading repeatedly stops after shader compilation, try the [single-threaded launch option](docs/steam.md#if-loading-stops-before-the-menu).

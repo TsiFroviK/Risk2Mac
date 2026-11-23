@@ -55,10 +55,24 @@ Risk2Mac собирает нативное приложение для macOS и�
 
 - **Файлы игры.** Скопируй свою Windows-установку Risk of Rain 2 туда, где Mac сможет её прочитать. Выбери папку с `Risk of Rain 2.exe`, `UnityPlayer.dll` и каталогом `Risk of Rain 2_Data`, в котором есть файлы запуска, `Managed` и `StreamingAssets`. Сборщик сверяет файлы версии 1.5.0 и извлекает иконку приложения из Windows-исполняемого файла.
 - **Инструменты для Mac.** При необходимости установи Xcode Command Line Tools командой `xcode-select --install`. Нужны Python 3.9+ и версия macOS, поддерживаемая SDK для сборки. Готовое приложение нацелено на macOS 11 или новее с Metal. Для результата и кэша используй APFS или Mac OS Extended. [Инструменты командной строки Apple](https://developer.apple.com/documentation/xcode/installing-the-command-line-tools) · [Требования .NET к macOS](https://learn.microsoft.com/en-us/dotnet/core/install/macos)
-- **Unity.** Войди в Unity Hub, установи полный **Unity Editor 2023.1.0f1** с Mac Mono Build Support и активируй лицензию редактора. Сборщик использует редактор для подготовки данных запуска Unity и ресурсов Metal. [Настройка Unity Hub](https://docs.unity.com/en-us/hub/install-hub-win-mac) · [Unity 2023.1.0f1](https://unity.com/releases/editor/whats-new/2023.1.0f1)
-- **Wwise.** Войди в Audiokinetic Launcher. В разделе **Unity → Offline Integration Files** выгрузи **Wwise Unity Integration 2024.1.18** для macOS и Windows в «Загрузки». Сборщик найдёт там `Unity.Mac.tar.xz` и `Unity.Windows.tar.xz` и проверит их. [Настройка Wwise и нестандартные пути к SDK](native/README.ru.md)
+- **Unity.** Войди в Unity Hub, установи полный **Unity Editor 2023.1.0f1** с Mac Mono Build Support и активируй лицензию редактора. Сборщик использует редактор для подготовки данных запуска Unity и ресурсов Metal. Редактор в нестандартной папке можно выбрать в Builder или передать через `--unity-editor`. Если его Mac-библиотеки отличаются от поддерживаемых, сборщик может скачать подходящий модуль Unity отдельно. [Настройка Unity Hub](https://docs.unity.com/en-us/hub/install-hub-win-mac) · [Unity 2023.1.0f1](https://unity.com/releases/editor/whats-new/2023.1.0f1)
+- **Wwise.** Войди в Audiokinetic Launcher. В разделе **Unity → Offline Integration Files** выгрузи **Wwise Unity Integration 2024.1.18** для macOS и Windows в «Загрузки». Сборщик найдёт там `Unity.Mac.tar.xz` и `Unity.Windows.tar.xz` и проверит их. Папку с обоими архивами можно выбрать в **«Дополнительных параметрах»** или передать через `--wwise`. [Настройка Wwise и нестандартные пути к SDK](native/README.ru.md)
 
 Для первой сборки нужен интернет, чтобы скачать инструменты и исходные пакеты. Сборщик использует установленный .NET 8 SDK или скачивает и проверяет SDK Microsoft для твоего Mac. Данные игры и управляемые сборки для macOS создаются во время сборки из твоих файлов и инструментов разработчиков SDK. Храни кэш вне репозитория и папки игры.
+
+### Как получить нужные файлы Windows на Mac
+
+Для Steam-копии нужен Windows-депо `632361` с манифестом `6263328667188910512` от 8 октября 2026 года. В сборке Steam `25921972` от 14 октября изменились игровая DLL и каталог Addressables. Risk2Mac проверяет выбранную версию игры до подготовки SDK.
+
+1. Войди в Steam под аккаунтом, на котором куплена игра, и открой на Mac `steam://open/console`.
+2. Если этот депо уже скачивался, перемести прежнюю папку загрузки `depot_632361` в другое место, чтобы Steam скачал файлы в пустую папку. Установленную игру и сохранения оставь на месте.
+3. Во вкладке **Console** введи команду и дождись сообщения **Depot download complete**.
+
+   ```text
+   download_depot 632360 632361 6263328667188910512
+   ```
+
+4. Выбери скачанную папку `depot_632361` в Builder или передай её через `--game`. Steam покажет полный путь. На macOS он может выглядеть так — `~/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/MacOS/steamapps/content/app_632360/depot_632361`. Предварительно запускать игру в Windows не требуется.
 
 ## Сборка
 
@@ -116,3 +130,5 @@ bash build.sh --game "$GAME" \
 Если у тебя уже есть совместимые файлы из предыдущей локальной сборки, их можно передать через `--private /путь/к/файлам`. [Ресурсы](docs/assets.ru.md) · [Управляемые сборки](managed/README.ru.md) · [Нативные компоненты](native/README.ru.md)
 
 Открой готовый `.app` в Finder. Логи Unity и запуска находятся в `~/Library/Logs/Risk Of Rain 2/`. Ссылки `Latest-Unity.log` и `Latest-Launcher.log` ведут на последний запуск. Настройки, список модов, отчёты и кэш хранятся в `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.
+
+Если загрузка регулярно останавливается после компиляции шейдеров, попробуй [запуск с однопоточным рендерингом](docs/steam.ru.md#если-загрузка-остановилась-до-меню).

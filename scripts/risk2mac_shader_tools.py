@@ -89,11 +89,11 @@ def fetch_source(stage, spec):
     return stage / root
 
 
-def compile_spirv_cross(clang, architecture, source, stage, output):
+def compile_spirv_cross(clang, target_flags, source, stage, output):
     config = stage / 'spirv-config'
     config.mkdir()
     (config / 'gitversion.h').write_text('#define SPIRV_CROSS_GIT_REVISION "vulkan-sdk-1.4.335.0"\n', 'utf-8')
-    flags = ['-O2', '-DNDEBUG', '-std=c++11', '-arch', architecture, '-mmacosx-version-min=11.0',
+    flags = [*target_flags, '-O2', '-DNDEBUG', '-std=c++11',
              '-DHAVE_SPIRV_CROSS_GIT_VERSION', '-I', str(config)]
 
     def compile_file(name):
@@ -103,19 +103,19 @@ def compile_spirv_cross(clang, architecture, source, stage, output):
 
     with ThreadPoolExecutor(max_workers=2) as workers:
         objects = list(workers.map(compile_file, SPIRV_CROSS_FILES))
-    checked_run([clang, '-arch', architecture, '-mmacosx-version-min=11.0', *objects, '-o', str(output)])
+    checked_run([clang, *target_flags, *objects, '-o', str(output)])
     if checked_run([str(output), '--revision']) != 'vulkan-sdk-1.4.335.0':
         raise RuntimeError('Unexpected SPIRV-Cross revision')
 
 
-def compile_vkd3d(clang, architecture, source, headers, stage, output):
+def compile_vkd3d(clang, target_flags, source, headers, stage, output):
     config = stage / 'vkd3d-config'
     config.mkdir()
     (config / 'config.h').write_text(VKD3D_CONFIG, 'utf-8')
     (config / 'vkd3d_version.h').write_text('#define VKD3D_VCS_ID " (from vkd3d 1.2-15build1 source)"\n', 'utf-8')
     include_paths = [config, source / 'include', source / 'include/private', headers / 'include']
     includes = [arg for directory in include_paths for arg in ('-I', str(directory))]
-    flags = ['-O2', '-std=c99', '-D_DARWIN_C_SOURCE', '-arch', architecture, '-mmacosx-version-min=11.0']
+    flags = [*target_flags, '-O2', '-std=c99', '-D_DARWIN_C_SOURCE']
     checked_run([clang, *flags, *includes, *(str(source / name) for name in VKD3D_FILES), '-o', str(output)])
     if not checked_run([str(output), '--version']).startswith('vkd3d shader compiler version 1.2 '):
         raise RuntimeError('Unexpected vkd3d-compiler version')
@@ -147,8 +147,10 @@ def prepare_tools(cache):
         if cached_tools_valid(manifest, tools):
             return tools
         try:
-            clang = checked_run(['/usr/bin/xcrun', '--find', 'clang'])
-            clangxx = checked_run(['/usr/bin/xcrun', '--find', 'clang++'])
+            xcrun = ['/usr/bin/xcrun', '--sdk', 'macosx']
+            sysroot = checked_run([*xcrun, '--show-sdk-path'])
+            clang = checked_run([*xcrun, '--find', 'clang'])
+            clangxx = checked_run([*xcrun, '--find', 'clang++'])
         except RuntimeError as error:
             raise RuntimeError('Install the Xcode Command Line Tools to build the shader converters') from error
         with tempfile.TemporaryDirectory(prefix='.build-', dir=destination) as scratch:
@@ -156,8 +158,9 @@ def prepare_tools(cache):
             with ThreadPoolExecutor(max_workers=3) as downloads:
                 vkd3d_source, spirv_source, headers = downloads.map(lambda spec: fetch_source(stage, spec), SOURCE_ARCHIVES)
             vkd3d_exe, spirv_exe = (stage / tool.name for tool in tools)
-            compile_vkd3d(clang, architecture, vkd3d_source, headers, stage, vkd3d_exe)
-            compile_spirv_cross(clangxx, architecture, spirv_source, stage, spirv_exe)
+            target_flags = ['-arch', architecture, '-isysroot', sysroot, '-mmacosx-version-min=11.0']
+            compile_vkd3d(clang, target_flags, vkd3d_source, headers, stage, vkd3d_exe)
+            compile_spirv_cross(clangxx, target_flags, spirv_source, stage, spirv_exe)
             for source in (vkd3d_source, spirv_source, headers):
                 license_file = destination / (source.name + '.LICENSE')
                 (stage / license_file.name).write_bytes((source / 'LICENSE').read_bytes())

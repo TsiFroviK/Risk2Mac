@@ -147,7 +147,16 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     fetch_wwiser = wwiser is None and tool_cache is not None and any(
         row["kind"] == "bank" and not within(private_data, row["path"]).is_file() for row in rows
     )
-    for row in rows:
+    for index, row in enumerate(rows):
+        if "variants" in row:
+            # The Windows game can regenerate its console-name cache on first launch.
+            # Select a verified input/output pair before checking or staging either file.
+            source = within(data, row["path"])
+            digest = sha256_file(source)
+            for variant in row["variants"]:
+                if digest == variant["input_sha256"]:
+                    row = rows[index] = {**row, **variant}
+                    break
         kind = row["kind"]
         relative = row["path"]
         if relative in bootstrap_files:

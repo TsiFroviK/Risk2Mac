@@ -169,12 +169,12 @@ def discover_wwise(private: Path, explicit: Path | None = None,
         )
 
     if explicit is not None:
-        for candidate in (explicit, *(runtime / NATIVE_PATH for runtime in runtime_directories(explicit))):
+        for candidate in (explicit, explicit / MAC_ARCHIVE, *(runtime / NATIVE_PATH for runtime in runtime_directories(explicit))):
             inspect(candidate, legacy=True)
             if native is not None:
                 break
         if native is None:
-            raise ValueError(f"Expected the official Wwise Unity Integration {WWISE_VERSION} macOS archive or Release bundle: {explicit}")
+            raise ValueError(f"Expected the Wwise Unity Integration {WWISE_VERSION} export folder, official macOS archive or Release bundle: {explicit}")
 
     private_native = private / "native/wwise"
     if native is None:

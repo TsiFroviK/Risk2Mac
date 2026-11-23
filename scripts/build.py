@@ -3,6 +3,7 @@
 
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import plistlib
@@ -14,7 +15,7 @@ import tempfile
 
 from icon import install_icon
 from risk2mac_depth import find_unity_editor
-from risk2mac_unity import open_unity_setup, prepare_unity
+from risk2mac_unity import MANAGED_DIRECTORIES, managed_modules_match, open_unity_setup, prepare_unity
 from risk2mac_wwise_sdk import SOURCE_FILES, discover_wwise, open_wwise_setup, stage_sources
 from steam_install import PLAY_SHORTCUT_HINT, install_destination, print_shortcut_instructions, register_shortcut, steam_root
 
@@ -91,6 +92,18 @@ def dotnet_sdk(host, cache, specified):
     return str(target / "dotnet")
 
 
+def check_windows_depot(game):
+    managed = game / (TITLE + "_Data") / "Managed" / "RoR2.dll"
+    recipe = json.loads((ROOT / "managed/inputs.json").read_text(encoding="utf-8"))
+    if not managed.is_file() or hashlib.sha256(managed.read_bytes()).hexdigest() != recipe["windows_anchors"]["RoR2.dll"]:
+        raise ValueError(
+            "The selected Windows game files do not match the supported Steam depot. "
+            "Move any earlier depot download aside, then enter this command in the Steam console:\n"
+            "download_depot 632360 632361 6263328667188910512\n"
+            "Select the completed depot_632361 folder printed by Steam."
+        )
+
+
 def assemble_metadata(app, game):
     contents = app / "Contents"
     launcher = contents / "MacOS" / TITLE
@@ -119,19 +132,29 @@ def assemble_metadata(app, game):
 
 
 def unity_support_for_build(options, private, cache, editor):
+    """Select native and managed inputs separately for partially prepared builds."""
     if options.unity_support:
-        return options.unity_support.expanduser().resolve()
+        support = options.unity_support.expanduser().resolve()
+        return support, support
     support = editor.parent.parent / "PlaybackEngines/MacStandaloneSupport" if editor else None
-    if options.unity_editor and support is not None and support.is_dir():
-        return support
-    if (private / "native/unity").is_dir():
-        return None
+    manifest = ROOT / "managed/inputs.json"
+    if support is not None and support.is_dir():
+        if not managed_modules_match(support / MANAGED_DIRECTORIES[0], manifest):
+            print("The Editor's Mac support modules differ from the pinned runtime. Using alternate Mac support.", flush=True)
+            support = None
+    else:
+        support = None
+    if options.unity_editor and support:
+        return support, support
+    private_player = (private / "native/unity").is_dir()
+    if private_player and managed_modules_match(private / "managed", manifest):
+        return None, None
     local = private / "native/UnityMacSupport"
     if local.is_dir():
-        return local
-    if support is not None and support.is_dir():
-        return support
-    return prepare_unity(cache)
+        support = local
+    if support is None:
+        support = prepare_unity(cache)
+    return (None if private_player else support), support
 
 
 def main():
@@ -146,7 +169,7 @@ def main():
     parser.add_argument("--wwiser", type=Path, help="Local wwiser checkout for sound bank conversion")
     parser.add_argument("--unity-support", type=Path, help="Official Unity 2023.1.0f1 MacStandaloneSupport directory")
     parser.add_argument("--unity-editor", type=Path, help="Unity 2023.1.0f1 app or executable for generating the depth-copy shader")
-    parser.add_argument("--wwise", type=Path, help="Official Wwise 2024.1.18 macOS archive, extracted integration, or Unity project")
+    parser.add_argument("--wwise", type=Path, help="Wwise 2024.1.18 export folder, macOS archive, extracted integration, or Unity project")
     parser.add_argument("--steam", action="store_true", help="Enable Steam integration using the Steam client installed on the destination Mac")
     parser.add_argument("--steam-library", type=Path, help="Existing Steam library root (Steam Settings > Storage)")
     options = parser.parse_args()
@@ -178,6 +201,7 @@ def main():
         raise ValueError(f"Windows game data not found in {game}")
     if supplied is None and any(not (game / name).is_file() for name in (TITLE + ".exe", "UnityPlayer.dll")):
         raise ValueError(f"Select the complete Windows installation with {TITLE}.exe and UnityPlayer.dll: {game}")
+    check_windows_depot(game)
     if supplied and not supplied.is_dir():
         raise ValueError(f"Local compatibility input directory not found: {supplied}")
     if supplied and supplied.is_relative_to(ROOT):
@@ -221,10 +245,10 @@ def main():
         if needs_wwise_sources and not stage_sources(wwise, sources):
             raise ValueError("Wwise C# inputs are missing. Run ./build.sh --setup wwise and export both the macOS and Windows Unity Integration archives into Downloads.")
         print("[1/4] Native runtime", flush=True)
-        unity_support = unity_support_for_build(options, private, cache, editor)
+        native_support, managed_support = unity_support_for_build(options, private, cache, editor)
         native_args = ["--wwise", str(wwise.native)]
-        if unity_support:
-            native_args.extend(("--unity-support", str(unity_support)))
+        if native_support:
+            native_args.extend(("--unity-support", str(native_support)))
         if options.steam:
             run(sys.executable, str(ROOT / "scripts/prepare-steam.py"), "--private", str(private))
             native_args.append("--steam")
@@ -236,8 +260,8 @@ def main():
                            DOTNET_GENERATE_ASPNET_CERTIFICATE="false", DOTNET_ADD_GLOBAL_TOOLS_TO_PATH="false",
                            DOTNET_CLI_HOME=str(cache / "dotnet-home"), NUGET_PACKAGES=str(cache / "nuget"))
         managed_args = ["--steam"] if options.steam else []
-        if unity_support:
-            managed_args.extend(("--unity-support", str(unity_support)))
+        if managed_support:
+            managed_args.extend(("--unity-support", str(managed_support)))
         if editor:
             managed_args.extend(("--unity-editor", str(editor)))
         if needs_wwise_sources:

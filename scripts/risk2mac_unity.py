@@ -62,6 +62,20 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def managed_modules_match(managed: Path, manifest: Path) -> bool:
+    """The Apple silicon Hub Editor can ship a different build of these same DLLs."""
+    files = json.loads(manifest.read_text(encoding="utf-8"))["files"]
+    for name, entry in files.items():
+        if entry["source"] != "private" or not (
+            name == "UnityEngine.dll" or (name.startswith("UnityEngine.") and name.endswith("Module.dll"))
+        ):
+            continue
+        module = managed / name
+        if not module.is_file() or sha256(module) != entry["sha256"]:
+            return False
+    return True
+
+
 def real(path: Path) -> Path:
     if path.resolve(strict=True) != path:
         raise ValueError(f"Unexpected link in Unity Mac support: {path}")
