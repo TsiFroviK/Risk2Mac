@@ -11,7 +11,8 @@ from risk2mac_unity import VERSION
 
 
 PORT_SCRIPTS = {"RoR2Arm64.ManagedSolo.dll", "RoR2Arm64.OfflinePlatform.dll", "Risk2Mac.Steam.dll"}
-STOCK_SCRIPTS_SHA256 = "df6dc8c23647dcde7c628d185ece8e41fa0767c7493678a409946c450cbc9f5a"
+# Build 25921972 adds RoR2.Items.IgnoreMapZonesUntilRemovalBehavior to the Mac script table.
+STOCK_SCRIPTS_SHA256 = "009b0639aea7fd753d726a1f70406c7b1174ff519ce03a3020fdbc430624fec0"
 
 
 def script_identity(record):

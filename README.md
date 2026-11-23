@@ -6,7 +6,7 @@
 
 Risk2Mac builds a native macOS app from your Windows installation of Risk of Rain 2 and the official Unity and Wwise SDKs. It selects the `arm64` or `x86_64` Unity Mono and Wwise binaries, adapts the original game data and shaders for Metal, compiles the port's compatibility code and signs the resulting `.app` locally. Saves and settings live outside the signed app bundle.
 
-This recipe targets the specific 1.5.0 files identified by the [asset manifest](manifests/assets.json) and [managed input manifest](managed/inputs.json). Runtime checks have been performed on Apple Silicon. The builder can also target Intel, where gameplay still needs hardware testing.
+This recipe targets the Windows Steam release **1.5.0#1224** (build **25921972**). The builder verifies the game against the [asset manifest](manifests/assets.json) and [managed input manifest](managed/inputs.json). Runtime checks have been performed on Apple Silicon. The builder can also target Intel, where gameplay still needs hardware testing.
 
 ## Steam integration
 
@@ -62,14 +62,14 @@ The first build needs an internet connection for tools and source packages. The 
 
 ### Get the supported Windows files on a Mac
 
-For a Steam copy, use Windows depot `632361`, manifest `6263328667188910512` (October 8, 2026). Steam build `25921972` from October 14 contains a different game assembly and Addressables catalog. Risk2Mac checks the selected game before preparing the SDKs.
+If your Windows Steam copy is build **25921972**, copy its `steamapps/common/Risk of Rain 2` folder to your Mac and select it in Builder. You can also download those files directly to a Mac from Windows depot `632361`, manifest `7949517344059620660`. Risk2Mac checks the game assembly and its matching asset catalog before preparing the SDKs. For the earlier October 8 depot, use [Builder 0.1.11](https://github.com/TsiFroviK/Risk2Mac/releases/tag/builder-v0.1.11).
 
 1. Sign in to the Steam account that owns the game and open `steam://open/console` on the Mac.
 2. If you previously downloaded this depot, move that download's `depot_632361` folder aside so Steam starts with an empty destination. Keep the installed game and its saves in place.
 3. Enter the following command in Steam's **Console** tab and wait for **Depot download complete**.
 
    ```text
-   download_depot 632360 632361 6263328667188910512
+   download_depot 632360 632361 7949517344059620660
    ```
 
 4. Select the completed `depot_632361` directory in Builder or pass it to `--game`. Steam prints its full path. One macOS client location is `~/Library/Application Support/Steam/Steam.AppBundle/Steam/Contents/MacOS/steamapps/content/app_632360/depot_632361`. You can use the fresh download directly without launching the game on Windows.

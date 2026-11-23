@@ -15,7 +15,7 @@ import tempfile
 
 from icon import install_icon
 from risk2mac_depth import find_unity_editor
-from risk2mac_unity import MANAGED_DIRECTORIES, managed_modules_match, open_unity_setup, prepare_unity
+from risk2mac_unity import MANAGED_DIRECTORIES, managed_modules_match, open_unity_setup, prepare_unity, sha256
 from risk2mac_wwise_sdk import SOURCE_FILES, discover_wwise, open_wwise_setup, stage_sources
 from steam_install import PLAY_SHORTCUT_HINT, install_destination, print_shortcut_instructions, register_shortcut, steam_root
 
@@ -93,18 +93,29 @@ def dotnet_sdk(host, cache, specified):
 
 
 def check_windows_depot(game):
-    managed = game / (TITLE + "_Data") / "Managed" / "RoR2.dll"
-    recipe = json.loads((ROOT / "managed/inputs.json").read_text(encoding="utf-8"))
-    if not managed.is_file() or hashlib.sha256(managed.read_bytes()).hexdigest() != recipe["windows_anchors"]["RoR2.dll"]:
+    data = game / (TITLE + "_Data")
+    managed = json.loads((ROOT / "managed/inputs.json").read_text(encoding="utf-8"))
+    assets = json.loads((ROOT / "manifests/assets.json").read_text(encoding="utf-8"))
+    steam = assets["steam"]
+    catalog = next(row for row in assets["files"] if row["kind"] == "catalog")
+    anchors = (
+        (data / "Managed/RoR2.dll", managed["windows_anchors"]["RoR2.dll"]),
+        (data / catalog["path"], catalog["input_sha256"]),
+    )
+    for path, expected in anchors:
+        if path.is_file() and sha256(path) == expected:
+            continue
         raise ValueError(
-            "The selected Windows game files do not match the supported Steam depot. "
+            "The selected Windows game files do not match the supported Steam depot.\n"
+            f"Expected {path.relative_to(data)} from Steam build {steam['build_id']}. "
             "Move any earlier depot download aside, then enter this command in the Steam console:\n"
-            "download_depot 632360 632361 6263328667188910512\n"
-            "Select the completed depot_632361 folder printed by Steam."
+            f"download_depot {steam['app_id']} {steam['depot_id']} {steam['manifest_id']}\n"
+            f"Select the completed depot_{steam['depot_id']} folder printed by Steam."
         )
+    return steam
 
 
-def assemble_metadata(app, game):
+def assemble_metadata(app, game, steam_build):
     contents = app / "Contents"
     launcher = contents / "MacOS" / TITLE
     shutil.copyfile(ROOT / "scripts" / "launch.sh", launcher)
@@ -114,7 +125,7 @@ def assemble_metadata(app, game):
         "CFBundleDevelopmentRegion": "en", "CFBundleDisplayName": TITLE,
         "CFBundleExecutable": TITLE, "CFBundleIdentifier": "com.Hopoo-Games--LLC.Risk-of-Rain-2",
         "CFBundleName": TITLE, "CFBundlePackageType": "APPL", "CFBundleInfoDictionaryVersion": "6.0",
-        "CFBundleShortVersionString": "1.5.0", "CFBundleVersion": "1",
+        "CFBundleShortVersionString": steam_build["game_version"], "CFBundleVersion": str(steam_build["game_build"]),
         "CFBundleSupportedPlatforms": ["MacOSX"], "LSMinimumSystemVersion": "11.0",
         "LSApplicationCategoryType": "public.app-category.games", "NSMainNibFile": "MainMenu",
         "NSPrincipalClass": "PlayerApplication", "UnityBuildNumber": "a008fa768e6c",
@@ -127,7 +138,8 @@ def assemble_metadata(app, game):
     (contents / "Mods").mkdir(exist_ok=True)
     (contents / "Mods" / "enabled_mods.txt").touch()
     (contents / "Resources" / "PortBuild.txt").write_text(
-        "Risk2Mac local build\nGame data profile 1.5.0 / Unity 2023.1.0f1\n", encoding="utf-8",
+        f"Risk2Mac local build\nGame data profile {steam_build['game_version']}#{steam_build['game_build']} / Unity 2023.1.0f1\n"
+        f"Steam build {steam_build['build_id']}, Windows manifest {steam_build['manifest_id']}\n", encoding="utf-8",
     )
 
 
@@ -201,7 +213,7 @@ def main():
         raise ValueError(f"Windows game data not found in {game}")
     if supplied is None and any(not (game / name).is_file() for name in (TITLE + ".exe", "UnityPlayer.dll")):
         raise ValueError(f"Select the complete Windows installation with {TITLE}.exe and UnityPlayer.dll: {game}")
-    check_windows_depot(game)
+    steam_build = check_windows_depot(game)
     if supplied and not supplied.is_dir():
         raise ValueError(f"Local compatibility input directory not found: {supplied}")
     if supplied and supplied.is_relative_to(ROOT):
@@ -277,7 +289,7 @@ def main():
                         "--tools", str(cache), *extra],
                        check=True, env=environment)
         print("[4/4] App bundle and signature", flush=True)
-        assemble_metadata(app, game)
+        assemble_metadata(app, game, steam_build)
         run("/usr/bin/codesign", "--force", "--sign", "-", "--deep", str(app))
         run("/usr/bin/codesign", "--verify", "--deep", "--strict", str(app))
         if steam and install_destination(steam, options.steam_library) != output:

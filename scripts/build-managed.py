@@ -109,8 +109,11 @@ def resolve_private_sources(private, recipe, unity_support=None, unity_editor=No
     return sources
 
 
-def needs_preparation(path):
-    return not path.exists() and not path.is_symlink()
+def needs_preparation(path, entry=None):
+    if not path.exists():
+        return not path.is_symlink()
+    previous = entry.get("previous_input_sha256", ()) if entry else ()
+    return bool(previous and path.is_file() and sha256(path) in previous)
 
 
 def reemit_plan(recipe, private_sources):
@@ -121,7 +124,7 @@ def reemit_plan(recipe, private_sources):
             "outputSha256": recipe["files"][name].get("input_sha256", recipe["files"][name]["sha256"]),
         }
         for name, expected in recipe["windows_reemit"].items()
-        if needs_preparation(private_sources[name])
+        if needs_preparation(private_sources[name], recipe["files"][name])
     ]
     if needs_preparation(private_sources[UNSAFE_ASSEMBLY]):
         plan.append({
@@ -172,7 +175,7 @@ def check_inputs(windows, private, recipe, private_sources, plan, compatibility,
         elif entry["source"] == "windows":
             check(windows / name, entry["sha256"])
         elif entry["source"] == "storage":
-            if name != GAME_ASSEMBLY or not needs_preparation(private_sources[name]):
+            if name != GAME_ASSEMBLY or not needs_preparation(private_sources[name], entry):
                 check(private_sources[name], accepted_input_hashes(entry))
         elif entry["source"] == "private":
             check(private_sources[name], accepted_input_hashes(entry))
@@ -247,7 +250,7 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
                     generated, *compatibility)
         private_sources = {**private_sources, **{name: generated / name for name in compatibility}}
     for name, entry in recipe["files"].items():
-        if name in vendor_builds or (name == GAME_ASSEMBLY and needs_preparation(private_sources[name])):
+        if name in vendor_builds or (name == GAME_ASSEMBLY and needs_preparation(private_sources[name], entry)):
             continue
         if entry["source"] == "windows":
             shutil.copyfile(windows / name, output / name)
@@ -293,7 +296,7 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
         print("Preparing the game assembly from the Windows installation", flush=True)
         run_patcher(dotnet, sdk, "game", scratch, windows / GAME_ASSEMBLY,
                     output / "RoR2Arm64.ManagedSolo.dll", offline, generated_game)
-        assert_file(generated_game / GAME_ASSEMBLY, recipe["files"][GAME_ASSEMBLY]["generated_input_sha256"])
+        assert_file(generated_game / GAME_ASSEMBLY, recipe["files"][GAME_ASSEMBLY]["input_sha256"])
         (generated_game / GAME_ASSEMBLY).rename(output / GAME_ASSEMBLY)
 
     run_patcher(dotnet, sdk, "dpad", scratch, windows / "Rewired_Core.dll", dpad, output / "Rewired_Core.dll")
@@ -342,7 +345,7 @@ def install(args):
     if find_ai_navigation_analyzer(editor):
         if needs_preparation(private_sources[AI_NAVIGATION]):
             vendor_builds[AI_NAVIGATION] = AI_NAVIGATION_SHA256
-        if needs_preparation(private_sources[ASSEMBLY_CSHARP]):
+        if needs_preparation(private_sources[ASSEMBLY_CSHARP], recipe["files"][ASSEMBLY_CSHARP]):
             vendor_builds[ASSEMBLY_CSHARP] = ASSEMBLY_CSHARP_SHA256
     if needs_preparation(private_sources[MEMORY_PROFILER]):
         vendor_builds[MEMORY_PROFILER] = MEMORY_PROFILER_SHA256

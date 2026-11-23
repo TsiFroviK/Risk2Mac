@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
@@ -91,6 +91,46 @@ def is_previous_shader(path, recipe):
     return bool(previous and path.is_file() and sha256_file(path) in previous)
 
 
+def prepared_shader_files(data, rows, recipes):
+    # Addressables sometimes renames a bundle even when its payload is identical.
+    directories = {}
+    prepared = {}
+    for row in rows:
+        if row["kind"] != "private":
+            continue
+        relative = row["path"]
+        path = within(data, relative)
+        recipe = recipes.get(path.name)
+        if not recipe:
+            continue
+        if path.is_file():
+            if not is_previous_shader(path, recipe):
+                prepared[relative] = path  # The caller checks this file before using it.
+            continue
+        if path.parent not in directories:
+            by_name = defaultdict(list)
+            for candidate in path.parent.glob("*.bundle"):
+                if candidate.is_file() and not candidate.is_symlink():
+                    by_name[candidate.stem.rpartition("_")[0]].append(candidate)
+            directories[path.parent] = by_name
+        for candidate in directories[path.parent].get(path.stem.rpartition("_")[0], ()):
+            if candidate.stat().st_size == row["bytes"] and sha256_file(candidate) == row["sha256"]:
+                prepared[relative] = candidate
+                break
+    return prepared
+
+
+def has_reviewed_startup(data, rows):
+    # These files reference one another by object index. Only reuse a complete
+    # matched set. Other Unity builds can have different IDs even for the same depot.
+    for row in rows:
+        if row["kind"] == "unity-startup":
+            path = within(data, row["path"])
+            if not path.is_file() or path.stat().st_size != row["bytes"] or sha256_file(path) != row["sha256"]:
+                return False
+    return True
+
+
 def output_file(path: Path, row, *, source: Path | None = None, data: bytes | None = None):
     if path.exists() or path.is_symlink():
         check_file(path, row["sha256"], row["bytes"])
@@ -132,6 +172,7 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     private_data = within(private, Path("assets") / DATA)
     rows = load_manifest()
     shaders = shader_recipes()
+    prepared_shaders = prepared_shader_files(private_data, rows, shaders)
     textures = texture_recipes()
     checks = []
     prepared_startup = set()
@@ -139,7 +180,7 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
     missing_editor_assets = set()
     asset_editor = None
     bootstrap_files = set()
-    if any(not within(private_data, relative).is_file() for relative in DATA_FILES):
+    if not has_reviewed_startup(private_data, rows):
         bootstrap_files.update((*DATA_FILES, *STREAMS, BUILTIN))
         asset_editor = find_unity_editor(unity_editor)
         if asset_editor is None:
@@ -195,13 +236,13 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             local = within(private_data, relative)
             bundle = Path(relative).name
             recipe = shaders.get(bundle)
-            if recipe is not None and (not local.is_file() or is_previous_shader(local, recipe)):
+            if recipe is not None and relative not in prepared_shaders:
                 if recipe["output"] != row["sha256"] or recipe["size"] != row["bytes"]:
                     raise ValueError(f"Shader conversion manifest disagrees with asset manifest: {relative}")
                 checks.append((within(data, relative), recipe["input"], None))
                 missing_shaders[relative] = bundle
             else:
-                checks.append((local, row["sha256"], row["bytes"]))
+                checks.append((prepared_shaders.get(relative, local), row["sha256"], row["bytes"]))
         else:
             checks.append(
                 (
@@ -284,6 +325,8 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             else:
                 if relative in missing_shaders:
                     source = within(generated, missing_shaders[relative])
+                elif relative in prepared_shaders:
+                    source = prepared_shaders[relative]
                 elif kind in {"private", "bank", "startup", "unity-startup", *EDITOR_ASSETS}:
                     source = within(private_data, relative)
                 output_file(target, row, source=source)
@@ -301,23 +344,27 @@ def export_private(source_app: Path, private: Path, include_banks: bool):
     kinds = {"private", "unity-startup", *EDITOR_ASSETS}
     if include_banks:
         kinds.add("bank")
+    manifest = load_manifest()
     shaders = shader_recipes()
+    prepared_shaders = prepared_shader_files(source, manifest, shaders)
+    if not has_reviewed_startup(source, manifest):
+        kinds.discard("unity-startup")
+        print("Skipping the unmatched startup files. Unity will regenerate the complete set.")
     rows = []
-    for row in load_manifest():
+    for row in manifest:
         if row["kind"] not in kinds:
             continue
         relative = row["path"]
-        if row["kind"] == "private" and is_previous_shader(within(source, relative), shaders.get(Path(relative).name)):
-            print(f"Skipping older {relative}; the builder regenerates it from the Windows installation.")
+        if row["kind"] == "private" and Path(relative).name in shaders and relative not in prepared_shaders:
+            print(f"Skipping {relative}; the builder regenerates it from the Windows installation.")
             continue
-        rows.append(row)
+        rows.append((row, prepared_shaders.get(relative) or within(source, relative)))
     verify_all(
-        (within(source, row["path"]), row["sha256"], row["bytes"])
-        for row in rows
+        (path, row["sha256"], row["bytes"]) for row, path in rows
     )
-    for row in rows:
+    for row, path in rows:
         output_file(
-            within(destination, row["path"]), row, source=within(source, row["path"])
+            within(destination, row["path"]), row, source=path
         )
     print(f"Exported {len(rows)} private asset inputs outside the checkout")
 

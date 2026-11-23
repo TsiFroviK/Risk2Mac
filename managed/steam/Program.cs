@@ -20,7 +20,7 @@ var achievements = helper.MainModule.GetType("Risk2Mac.SteamAchievements");
 Directory.CreateDirectory(output);
 var report = new List<object>();
 var expected = new Dictionary<string, string> {
-    ["RoR2.dll"] = "b6dcf730d3c1ce9245b2fd035cea7042ee88342e7fa9bcc31d5a6291895d9c9c"
+    ["RoR2.dll"] = "db708ee3b4dbbf53e39b18a80193367472bfc561dd8dcd0af431a845e1f3cd08"
 };
 foreach (string name in new[] { "RoR2.dll", "RoR2Arm64.OfflinePlatform.dll", "RoR2Arm64.ManagedSolo.dll", "Facepunch.Steamworks.dll" })
 {

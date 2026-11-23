@@ -1,7 +1,9 @@
 {
   "schema": 1,
   "windows_anchors": {
-    "RoR2.dll": "a5f7d83c7e6872fdd6099fdc299adb7d4fa03cbf465e526d6f5efcc35c2c281d",
+    "RoR2.dll": "48f2758cccbe1a5efba88cffe0a68631953f489a71a92726572c15a4c57ff90c",
+    "Assembly-CSharp.dll": "22bd24084b3f0d10658c737115b2866d9e717188ded6ef8e0375647cf9fe9091",
+    "KinematicCharacterController.dll": "73b6f787b12aac5015b80fdaa25c8f977ff5fc0287a34b2fb565309def153919",
     "ModLoader.dll": "c6cc5139b219ce0b4ae7f891888d83068b3aec6d990db8850c27edf933b0d65b",
     "Rewired_Core.dll": "3b74451386d8bb90d1cba9bf423eff9e2fe9ba1d7b3ed4ce6e3341b2b932b93a",
     "AK.Wwise.Unity.API.dll": "564b74ec232e81af8fa4b65c17537a4d05890d9181281eab0bc28bd441a3a781"
@@ -32,8 +34,8 @@
       "source": "private"
     },
     "Assembly-CSharp.dll": {
-      "sha256": "1f9a276ed342f21df941049a1cfefaa37b39716689dd8ecbb8047d71178d0662",
-      "generated_sha256": "2d22027dbf5cfb2f862028c571752620ba53a96e7865426b036e4c9a0af89038",
+      "sha256": "2d6200b5c4a746d50dcc7a5ff4b5cc5d2c939f27fbd8d03275fc181c89094ebf",
+      "previous_input_sha256": ["1f9a276ed342f21df941049a1cfefaa37b39716689dd8ecbb8047d71178d0662", "2d22027dbf5cfb2f862028c571752620ba53a96e7865426b036e4c9a0af89038"],
       "source": "private"
     },
     "AsyncManagement.dll": {
@@ -73,7 +75,8 @@
       "source": "private"
     },
     "KinematicCharacterController.dll": {
-      "sha256": "baf866d023ee910aac7c3fbf7a4be9666dfc8640db2661251429988189ab82ae",
+      "sha256": "befc81bd800ec3e20365fbd7fffb69f0324d738848dfccfce0303fdf97b41e3f",
+      "previous_input_sha256": ["baf866d023ee910aac7c3fbf7a4be9666dfc8640db2661251429988189ab82ae"],
       "source": "private"
     },
     "LegacyResourcesAPI.dll": {
@@ -110,10 +113,10 @@
       "source": "private"
     },
     "RoR2.dll": {
-      "sha256": "b6dcf730d3c1ce9245b2fd035cea7042ee88342e7fa9bcc31d5a6291895d9c9c",
+      "sha256": "db708ee3b4dbbf53e39b18a80193367472bfc561dd8dcd0af431a845e1f3cd08",
       "source": "storage",
-      "input_sha256": "ea13200d83e7db2342879b39c9e80f2c08808fb86e8b217387554aba574b15b5",
-      "generated_input_sha256": "4f873ed808b9f074cf60bffacfc3c509e47eeaeb8d616555dc29e60d636db882"
+      "input_sha256": "167564fb2b0c48cc8c509be721a6e54fcca9ec2c003d05a2ed6b70fc9e07a624",
+      "previous_input_sha256": ["ea13200d83e7db2342879b39c9e80f2c08808fb86e8b217387554aba574b15b5", "4f873ed808b9f074cf60bffacfc3c509e47eeaeb8d616555dc29e60d636db882"]
     },
     "RoR2Arm64.MacDpad.dll": {
       "sha256": "59097839eac3666a92caf9d58e8238ee963a7b32cd46e777d00fa1b28430bd62",

@@ -3,7 +3,7 @@ using Mono.Cecil.Cil;
 using System.Security.Cryptography;
 using System.Text.Json;
 
-const string StockHash = "A5F7D83C7E6872FDD6099FDC299ADB7D4FA03CBF465E526D6F5EFCC35C2C281D";
+const string StockHash = "48F2758CCCBE1A5EFBA88CFFE0A68631953F489A71A92726572C15A4C57FF90C";
 if (args.Length != 4) throw new ArgumentException("GamePatcher <stock RoR2.dll> <ManagedSolo.dll> <OfflinePlatform.dll> <new output directory>");
 string stock = Path.GetFullPath(args[0]);
 string helperPath = Path.GetFullPath(args[1]);

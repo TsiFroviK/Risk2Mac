@@ -19,11 +19,11 @@
       "mode": "translate",
       "size": 123051
     },
-    "ror2-base-captain_static_assets_all_4b35bc3735a116c4b633311b173fcf41.bundle": {
-      "input": "f7c44570c1428ec407aa73e3467ae4216c36e0e7599af370531d6033e5f283b9",
-      "output": "4c0547e05a4bd3e474415fb01f8e252971fa23bba87132b99945178d4fac7094",
+    "ror2-base-captain_static_assets_all_a14b183460845b2231dfffc64774c48e.bundle": {
+      "input": "f42d08adbfc862cf9939668e6b9d0f2e995136e19dce7fa3d85a22e7ee6f70a0",
+      "output": "5589282f02c1accea5601394d6736b83d274432eb0aff4fa06a2863b55b90de1",
       "mode": "translate",
-      "size": 1675054
+      "size": 1675059
     },
     "ror2-base-core-cameraeffects_assets_all_94dd4dba44c17c45d3272153d0693a18.bundle": {
       "input": "3b6bb7a90c72d09ec49cc1865c409a85777996ac2be83a20e7316b40aac35798",
@@ -37,11 +37,11 @@
       "mode": "translate",
       "size": 31495
     },
-    "ror2-base-engi_static_assets_all_2c092934796777f9d5557a0a1f5e4acb.bundle": {
-      "input": "2f759d3e0e38d655ac17feb606ac870245277a662fd22bbc3b70b373d3ea5c12",
-      "output": "ca4f7a57dd98f8f5045fbe8bde1adf2941474f9c0ab9c3888df3516494b49dab",
+    "ror2-base-engi_static_assets_all_ca9c05482768f50282e46317ac8f26bb.bundle": {
+      "input": "0a43869f33df0a8a723d9b4b5f6f383ac1373cc8f1a3c88def7c2b4dea991e2e",
+      "output": "514426d9ec0c4ae0386665bd288522e50c4992a2165abb80bf73b16760539d63",
       "mode": "translate",
-      "size": 374020
+      "size": 374014
     },
     "ror2-base-skymeadow_shader_assets_all_ffaec68d9b02dddbbd64030d9b864e35.bundle": {
       "input": "765d6c943bc60fd91337f114d56e4bf1d1829a53b4a9aac7beb47b3ccf56cbba",
@@ -49,13 +49,13 @@
       "mode": "translate",
       "size": 33491
     },
-    "ror2-dev-common_assets_all_728c5e9082e115f298ba88d8a158ced9.bundle": {
+    "ror2-dev-common_assets_all_c2a010834438d8ea98e023e44c346a39.bundle": {
       "input": "5c087af27fb73ecc5bdc8ca256c2f53b81f343713e853573c4a1240c4b3aea79",
       "output": "a93a694def011a16c3348c2e84026b7a457d2201e4d4a19717bc8269bd68e7a0",
       "mode": "translate",
       "size": 1481237
     },
-    "ror2-dlc2_static_assets_all_5c127335589289065cc3bde2e74c440a.bundle": {
+    "ror2-dlc2_static_assets_all_d1a5486ca4276715dd160cd1cf6c2280.bundle": {
       "input": "4e605be31a245f666a4fbffec59589c026500ddd71017f5d85c799395a4274c2",
       "output": "cb7364529e4dd1e3c31de9f60b51639024edf29b710f50c4a2117386e3a43fdd",
       "mode": "translate",
@@ -67,25 +67,25 @@
       "mode": "translate",
       "size": 34359
     },
-    "ror2-dlc3-conduitcanyon_static_assets_all_face0fc14d2116260245c9326c852262.bundle": {
+    "ror2-dlc3-conduitcanyon_static_assets_all_43fb3cbe1f9c7d3c2cda79e3bf5521a3.bundle": {
       "input": "051fa0722755751b8d4e64fe307a7c657b541e7cd006b7b385eefa48d304df51",
       "output": "eb3c66ed560302a2d4ac568a6316e84be2ae4361bd7ba0841f9931e2737380a0",
       "mode": "translate",
       "size": 297423
     },
-    "ror2-dlc3-repurposedcrater_scenes_all_a510bb9e89aebe061a0fba6f44a31571.bundle": {
+    "ror2-dlc3-repurposedcrater_scenes_all_17beed5ebb0022d5080f60501aff7f94.bundle": {
       "input": "90ad4e6fc12edfe395ea1b22fbc243a2c25f79b45c128af133a82d03aba3b584",
       "output": "4b3921593746fee64e75ab7804fbde3c57a32f8d4ad37c64094c1178ae0f9f3e",
       "mode": "translate",
       "size": 14079134
     },
-    "ror2-dlc3-solutionalhaunt_assets_all_eadd8444825009c5037e8f7d270ca57e.bundle": {
+    "ror2-dlc3-solutionalhaunt_assets_all_82ef0b143c89f4a6abd4023e31d5c51c.bundle": {
       "input": "6295e3018c6446579fc8549b2afaecf05bc300651d74365d413eee854b504443",
       "output": "ca70af0706e0211a992d592645a1c8d1d5737a7ccf0b49dd4204fbd664a77a64",
       "mode": "translate",
       "size": 79587044
     },
-    "ror2-dlc3_assets_all_d13fa2fd102ca6802454e115e3fbcef5.bundle": {
+    "ror2-dlc3_assets_all_cd1fa3227c9f976390c3713074fad75d.bundle": {
       "input": "37f7c1dc15ed4c91811b9720004c4452d86f43c3d956ce5cb4460deb1a297851",
       "output": "c41c6aaf92676b2a798e191466f5195c06e1e32dabc8195686b13bfc0a76b2d0",
       "mode": "translate",
@@ -97,25 +97,25 @@
       "mode": "translate",
       "size": 23987
     },
-    "ror2-junk-ancientwisp_static_assets_all_49ec58a682fe1f51e2f19c4d3e2c89ea.bundle": {
+    "ror2-junk-ancientwisp_static_assets_all_39574e1c15b04ea17f6fc85a37e7f8b6.bundle": {
       "input": "5f6668f4b8577446abc4fbb6aef122deacbab585640d402bd62d9c9ac4751c5a",
       "output": "83dc6f39b68bdff778bc0df98cef40197d69484f572c066425a7e51903a56a0e",
       "mode": "translate",
       "size": 109926
     },
-    "ror2-junk-beetlequeen_assets_all_818adbccc36f63ba0439885d8567cd47.bundle": {
+    "ror2-junk-beetlequeen_assets_all_ac65b4c2504ebe612fec1ccc19617803.bundle": {
       "input": "3729376e9ca043ffaef6217b65b0d0f54ab9e3a2e276f9747442e8abb225ca77",
       "output": "c555dadb881446a3726d5deb18c45e3fc7a99d5ea40afafcd415aee1874ebaa0",
       "mode": "translate",
       "size": 482643
     },
-    "ror2-junk-misc_static_assets_all_d6c4434fdf8321063c9a8a42111c0e2d.bundle": {
+    "ror2-junk-misc_static_assets_all_84b7f9743fe09f8e3dee71e0d96594f2.bundle": {
       "input": "3bd5d7e690c436f90f793488149cbddcba7689ed5b4e0a228372e3368232bd7f",
       "output": "68b7dfc5e8e2ef3bcd660fc7ddffc486747b0f515e8fee71fc6c87723905afd1",
       "mode": "translate",
       "size": 149227
     },
-    "ror2-junk-paladin_static_assets_all_3a81fa7af80f98d350cfef90b35ffa88.bundle": {
+    "ror2-junk-paladin_static_assets_all_fcd12bd3b827d6e0efa09565013cbe32.bundle": {
       "input": "c997aee9403246127b8abd62dac7053bab049edc748654a1893519f212a1abe8",
       "output": "c6e0c605857055197dd74b91fef185bfff4d1799cda23704e3782d94814a53ec",
       "mode": "translate",
@@ -139,349 +139,349 @@
       "mode": "translate",
       "size": 32154
     },
-    "ror2-base-arena_scenes_all_fc2a785326046af750cbd5a5dbcf6fc8.bundle": {
+    "ror2-base-arena_scenes_all_be3349ad5c8a477b49d82610b301cd34.bundle": {
       "input": "83f330430b6978ee5ec8ca8262cb02ed7d5181ef1ac03ecb2c5f4dc2e7721acf",
       "output": "8e5677ec36a4d2f8935a7790f022ddbaf37271ecf75d3cc60b0454ad4b2379a1",
       "mode": "compute",
       "size": 1827992
     },
-    "ror2-base-artifactworld_scenes_all_e8f1a1fe3f946dae6a342f1a35e8d6c8.bundle": {
+    "ror2-base-artifactworld_scenes_all_c3c46a2d46762a90b36a0df372e6759f.bundle": {
       "input": "0e845a926caa05a75b7142bd240ca0dffce8408f4209e419ea9ba7f22e88652f",
       "output": "f4ac2ce608b588da03011ec65a380836d6b90fa238ab3ae8bd36f5d554134b37",
       "mode": "compute",
       "size": 2345594
     },
-    "ror2-base-bazaar_scenes_all_074710ceb5beea185dec41ab6fd3a851.bundle": {
+    "ror2-base-bazaar_scenes_all_34bdee9920195e56feb47e1b9023eb07.bundle": {
       "input": "e4af40aedd568f48acfe426a04341188e1e06734d0e0609b37cef094dfd67e33",
       "output": "d58fc4a0d0834bb1a76aa941064fe51348627cbdaa0a356a868ba108882306d5",
       "mode": "compute",
       "size": 4376388
     },
-    "ror2-base-core-camera_assets_all_8d724744706f379928729f6ac72c66d5.bundle": {
+    "ror2-base-core-camera_assets_all_852f3d0e05ef57b8cb7a8bb53f0f0f3d.bundle": {
       "input": "8a9abf452b6fecde568d4b3ded5b4a829cad99587f48f05a9d13344514a31eef",
       "output": "a09cea64a4672ec124c55c094666a33e1319ec733a4f80f53c1f23c772bb361b",
       "mode": "compute",
       "size": 1693823
     },
-    "ror2-base-crystalworld_scenes_all_02d7ef3f15217403bd540b1677697d49.bundle": {
+    "ror2-base-crystalworld_scenes_all_717c4c9f5d34e7337f649a68d12c5b35.bundle": {
       "input": "2a71085e5c6b9a482f945b49ea4448f20a359a2b1ff1cb33e84ded8269ea1f7c",
       "output": "3bf88731621d1af02cba7376e5ad08ec850b9294d05f752680a50796ed4b63fe",
       "mode": "compute",
       "size": 4271874
     },
-    "ror2-base-dampcavesimple_scenes_all_11368146d1efb65ea8c53a97e324a48b.bundle": {
+    "ror2-base-dampcavesimple_scenes_all_b8e5d95f59af73d0d6e27428ee0c2712.bundle": {
       "input": "13e30a27aede6400cd50074d931fb53f261bee6efa263fbabb51a3e360ec1949",
       "output": "328e4b70d25c69393aef2d21d51c08b3bf4c75b9f78e81274030865740b43e73",
       "mode": "compute",
       "size": 20876371
     },
-    "ror2-base-eclipseworld_scenes_all_4d53d9edd2a269f9bb3c02a01b5b4a91.bundle": {
+    "ror2-base-eclipseworld_scenes_all_2e90bc9ebd0ba23dbc01441cce1720b6.bundle": {
       "input": "bb6c6ebf964bc385c933b8167d53ad1b20cb8e2f9894d82f81df10f6ff0a356f",
       "output": "425a7137fe20c487ee832bdad2b1993c33091a567d5fac503a4d6a93d59a8ea1",
       "mode": "compute",
       "size": 1829663
     },
-    "ror2-base-golemplains_scenes_all_694836f5f1658cfcd3649f17cabee372.bundle": {
+    "ror2-base-golemplains_scenes_all_54527ff062e4831397f5c67a7abe914e.bundle": {
       "input": "e7e1ec2d866826404760ed1dc306b544b729b5794e05a2bc416cc44d4c627ce4",
       "output": "10e9bde9474fcf88ae8d426923a3353677951564dd5c1dcc89a321b50fd22552",
       "mode": "compute",
       "size": 4710164
     },
-    "ror2-base-intro_scenes_all_12eab5fe5328146875232a25c82f9258.bundle": {
+    "ror2-base-intro_scenes_all_6b197904098fd007941d99cea482d217.bundle": {
       "input": "30fa7d9a470faabe8d0dc709a637531d9f33e93536c58a6681c5cd21d05b605b",
       "output": "8879175f586aaefb048080de33a89d084611f89cb0f50089167bf2166a3f2cb2",
       "mode": "compute",
       "size": 1789164
     },
-    "ror2-base-limbo_scenes_all_9fe9ce2de89ad5c3384885dc80e0b299.bundle": {
+    "ror2-base-limbo_scenes_all_21505e44755b85863b74440374e13bc0.bundle": {
       "input": "adae6dab89debc5de0c6f325ff167bd9bd490036bd30045d95d4531119ff1b54",
       "output": "4bf01182c62c80caa96142f642a23c692252be62598ccef08b93d0cc51b41193",
       "mode": "compute",
       "size": 1816888
     },
-    "ror2-base-lobby_scenes_all_b0ac4bca926d5c61c44b35089272609c.bundle": {
+    "ror2-base-lobby_scenes_all_f88482db743dd301ed71dbda05a85306.bundle": {
       "input": "50a323c623600c2687058215d048f697c90c59aaa919c260f58d2f96a047d215",
       "output": "b45e2fc76d517d542bce21c5bed4e4606f48884bf607f1100d685c045a241f83",
       "mode": "compute",
       "size": 1768762
     },
-    "ror2-base-logbook_scenes_all_321adedca9102b53b4032f1ac5c10913.bundle": {
+    "ror2-base-logbook_scenes_all_a3780d9cb1104648f1e5194f39a435e5.bundle": {
       "input": "1a1810e96b21a204b63a3c4f4cb09b7f2e0a8658058a3ab7e51a734755fb3e6d",
       "output": "4c755ff9e8192f4e3bea792f1091a8b2722e36a57f9c2738ad80dda4e3d05e86",
       "mode": "compute",
       "size": 1734091
     },
-    "ror2-base-moon2_scenes_all_1ef26800cef1deb2a5fef1c7efc0920f.bundle": {
+    "ror2-base-moon2_scenes_all_f8d5e6f8672a6621d7215dc4f359e4a8.bundle": {
       "input": "7f592b9a1ecf62ced1d05c9ee6691dab0f7f281c528b93735a269bd9dbd775f6",
       "output": "a9ba46b35ff76ea7552fc5cd09e60089ecd36e1ca26a82e9a1ad0fe78536644a",
       "mode": "compute",
       "size": 9065340
     },
-    "ror2-base-moon_scenes_all_e50c66f15bff8198c75145361add837f.bundle": {
+    "ror2-base-moon_scenes_all_14bdd7d9eb410a1f7c044ceb56875484.bundle": {
       "input": "f2b07aae923787fb013852b3b25296cf16b697789d3575f42bc87c27d8c91f59",
       "output": "bf99edbf522c9ebb392437a96decaddb6d2e20c9117986c77b7ed21db929e85a",
       "mode": "compute",
       "size": 10104641
     },
-    "ror2-base-mysteryspace_scenes_all_44ea520a5424868085112c1a7af1aaf9.bundle": {
+    "ror2-base-mysteryspace_scenes_all_f1f9df50c2a5d01534bfbd55178de41a.bundle": {
       "input": "849e217eef92f3216251bae366afdd11d69443aebe9d005f08c1e9e279966f67",
       "output": "37f44213b7a8d01f2ff7edc43cc3c5b3a2fc0c8a3409d1fdf8a9bc1867da1119",
       "mode": "compute",
       "size": 2402387
     },
-    "ror2-base-outro_scenes_all_1dffe2aef924c03d578ce136022b4cb7.bundle": {
+    "ror2-base-outro_scenes_all_d46c8e6c2ae35255d5b18ca5bd12b256.bundle": {
       "input": "1b5d7916d7e43ea3e36a0d0b085573ea8b67d96c52fe5a4517c2b5a30ec38e93",
       "output": "5499fd488d5f431e32cf606cfe142a8a1271d8203dd7bc3b856ead15d88aac2f",
       "mode": "compute",
       "size": 2072183
     },
-    "ror2-base-rootjungle_scenes_all_2ae195bae5124a39ee5d8f5494324d3a.bundle": {
+    "ror2-base-rootjungle_scenes_all_66a019543bbc0721c7257c86b2e68c51.bundle": {
       "input": "4f683cecd9c64794341f1b92c2cbb3c5f8214e41049b5edee074ce0df3d216c3",
       "output": "73748837bea35b0de805cc3571ab8a7985377815ebf9212bdb95a55793fb4687",
       "mode": "compute",
       "size": 2490736
     },
-    "ror2-base-shipgraveyard_scenes_all_e7ccff8125e5952dd0bdd1ba1b9bbef4.bundle": {
+    "ror2-base-shipgraveyard_scenes_all_794df788e91c79101e9712d91ab16356.bundle": {
       "input": "e8919bb2c73822ff6023fad2ed06f670097e49d3a1306fcaebf5b3b89db75f5b",
       "output": "ce054e3216e4f9377059198125ca6ff3f176cdeabb8475d563be5166b01ef5d1",
       "mode": "compute",
       "size": 15602600
     },
-    "ror2-base-splash_scenes_all_7fcb7dd49c8ad1d82685037b1f53d860.bundle": {
+    "ror2-base-splash_scenes_all_afff160691c59d38337b00c28f102456.bundle": {
       "input": "777852d571d13c70f536fd0ae05d86249d242ec76117d937b4d8998a3075a65d",
       "output": "06c2440699188b229fa85d7c9e27e5adb59f9da318f1fa0c3c012ab194d242e2",
       "mode": "compute",
       "size": 1778484
     },
-    "ror2-base-title_scenes_all_e7707b38a9c93209d262e8493042d22b.bundle": {
+    "ror2-base-title_scenes_all_8bb4af84115563fcd52624b40870ab9d.bundle": {
       "input": "04bd83acdb82eca29e83bacff503ac0816444d66611eda12c64d4d9b26d80fca",
       "output": "5dd0bfce65e6cd0953b693872f7496470cb0a605df3fd021f2597ea70af482b6",
       "mode": "compute",
       "size": 2544950
     },
-    "ror2-dev-itemlogbookpositionaloffsets_scenes_all_8ac0160af1c5f017926db4c5c5487509.bundle": {
+    "ror2-dev-itemlogbookpositionaloffsets_scenes_all_f0c091c2a04ff9dc6d7bd7409bfdc033.bundle": {
       "input": "a3f932358bea92a66430fbd0aa8127e6edc86ab5de85a7fb7d05fa6527787479",
       "output": "c90a00b5840e70e6b606f3375f9d2d3c9b60cff0842ba43726201c859128cf47",
       "mode": "compute",
       "size": 1819217
     },
-    "ror2-dev-renderitem_scenes_all_481939c2ac4786e3565b6cf69aefc696.bundle": {
+    "ror2-dev-renderitem_scenes_all_e37685d8395dcc85cca010594f186ec0.bundle": {
       "input": "c5187a8b4b003ae43951907000a4319a1c32b1e9cec24155a750c50068bf86fd",
       "output": "4a23b08dd865fa376651743d6a7ed0ef4faa92073400a830ef7a5796158ce46d",
       "mode": "compute",
       "size": 1705358
     },
-    "ror2-dlc1-ancientloft_scenes_all_dcc3fd142e8aecef8927fbf1e4bd11a8.bundle": {
+    "ror2-dlc1-ancientloft_scenes_all_26049fc3b4b870ad823270cf7e71115d.bundle": {
       "input": "4f294208029923c8afa581cf1f48392b48f8ba7e6f0fb421a7bc6e957c2ee4e1",
       "output": "935a2c18c3e4de75a4b8a6a0bb71fcadfe3ab0a7fa89e6472896cf569b76c018",
       "mode": "compute",
       "size": 2943120
     },
-    "ror2-dlc1-infinitetowerworld_scenes_all_a4f72eaf1caa1faacff0c1fe78bdad5e.bundle": {
+    "ror2-dlc1-infinitetowerworld_scenes_all_9a841cceb3ca93c8b4ad7815fa95ca14.bundle": {
       "input": "67d74294691dd1612d2d3bdfb40c87a1d547c4b3535d8c050018f0b53e08feb8",
       "output": "038d01a6b71abbd2fb5dc51f4b6cb85f99bab57f8462a70cee13b09297821f68",
       "mode": "compute",
       "size": 1815125
     },
-    "ror2-dlc1-itdampcave_scenes_all_dc7ec49a419a6e9711f5d4eb690f3822.bundle": {
+    "ror2-dlc1-itdampcave_scenes_all_d2825670e2003d4194498237dd1d7df2.bundle": {
       "input": "25583b8d0f1c80166c7eb802b6b481fe199d94766d59a1bd53287154a6ce1274",
       "output": "5cb89548173e2de7eb214203eff7f711a0cf493c1b6cadfc0946f3e6097b0fc4",
       "mode": "compute",
       "size": 6609803
     },
-    "ror2-dlc1-itfrozenwall_scenes_all_89c08baa9b81bc21a8616513ba0acdc2.bundle": {
-      "input": "2bb0451c8520a218505ac3528cc64cb23546d2e7ac0a26cbf102857f1062b4a9",
-      "output": "ca6acce009534b719cad71afd89e064a2c20be2bb479880fff8ffed6aff82d7b",
+    "ror2-dlc1-itfrozenwall_scenes_all_1a27ba1f7986bb8db7d73bfed78261c2.bundle": {
+      "input": "1e8e33c934160d42bdd81aba562cdc015c3e71e102f71f97af20bdd6063cb953",
+      "output": "4f259ca328cb3d5716af99f89af18e4cd74dcfb74b385a8c915c9a2a2bd00101",
       "mode": "compute",
       "size": 2597257
     },
-    "ror2-dlc1-itgoolake_scenes_all_a51ead2307bf54d9bdff7855998ddd65.bundle": {
+    "ror2-dlc1-itgoolake_scenes_all_258681cc943a4eb99654059f6bae84fe.bundle": {
       "input": "da6c51ecfe64bec36ce09e86b5999d52dbd6d8d8abd181672fbed911bec23c31",
       "output": "ca4cdbabbb1be2176b1dffea89f535c43600d6472342f6faac87066ed22bf928",
       "mode": "compute",
       "size": 2699534
     },
-    "ror2-dlc1-itmoon_scenes_all_f42bb0b552211df1a0023440b85e8c35.bundle": {
+    "ror2-dlc1-itmoon_scenes_all_e9a3c290f28b99aafeefd4944d767b98.bundle": {
       "input": "210352c35531e8b32523d1cc368956e633ff77907be8681ed44ba07874b78fba",
       "output": "7459536c2138e6c104f632e28ebecdfdf5f11750a838b4dd3254fcc86da12077",
       "mode": "compute",
       "size": 5249486
     },
-    "ror2-dlc1-snowyforest_scenes_all_147df7783cb7d99029e9372cdaa78c6d.bundle": {
-      "input": "23633cde58b24e55de4bbabcd9dbdb78a9b1797924d5b026678aaac475e24da1",
-      "output": "f2ec74906d3add73e76914a4d9b41727a489f731ca36a75189d28c9a848cf599",
+    "ror2-dlc1-snowyforest_scenes_all_a695aa4345f93b69d5dc6b494d135861.bundle": {
+      "input": "95a1a33ae6ce72c0ee0de52c6474a5c030ea982c1e07053257037875b869b6d9",
+      "output": "19905f72bc438ecd9a26b5419622029b4ceca87679f54f038ae4d0c3d7626a19",
       "mode": "compute",
       "size": 5249528
     },
-    "ror2-dlc1-sulfurpools_scenes_all_c19bf45ab1789fee6ef74dcdf18873e3.bundle": {
+    "ror2-dlc1-sulfurpools_scenes_all_6c0d40b8fb3ac6524ce7cd73a0059354.bundle": {
       "input": "d94b643d35be14852c00d97863b343089552fc345398351ff3bc8957fe08cac6",
       "output": "b02f0f3fe6af2a4765f99203db2d4e4a616907eff2dcabdab85e38aeb718dd2a",
       "mode": "compute",
       "size": 6837935
     },
-    "ror2-dlc1-voidoutro_scenes_all_b1a31a96dd3d3fe820f541d7f63ad466.bundle": {
+    "ror2-dlc1-voidoutro_scenes_all_cf9f82a4ac71de6cfd396f1562e53999.bundle": {
       "input": "181dd3127fdc3c6fa2ac8ce7b7a6854aa98b880cafc11df506fee96f63573908",
       "output": "d130dd2bdf75fce2bd689f748bec90251212377a8835de8f49cf357416596767",
       "mode": "compute",
       "size": 3581453
     },
-    "ror2-dlc1-voidraid_scenes_all_3db0521c4ed123aa896a76e5189306b9.bundle": {
+    "ror2-dlc1-voidraid_scenes_all_cc3ca75f79685658b24d6b6273ec4478.bundle": {
       "input": "36a09130e12288b3baced61b0814cab6419117caeda49d37c55e06fb5f19d0a4",
       "output": "db3c879a98a6034cb3f1888cad339678f72c12a362f687c1b2c00e6417c0524e",
       "mode": "compute",
       "size": 8786584
     },
-    "ror2-dlc1-voidstage_scenes_all_e3d5434ea23fbe16ac2c1a79d043ba3d.bundle": {
+    "ror2-dlc1-voidstage_scenes_all_f9d900f40c98dd5aeefce282eb0fea1c.bundle": {
       "input": "c69bd3c14d72823ea6cf684ff0c2192bed826d2714dc9e44b642a727f034ac81",
       "output": "a0310bda1c5f5ac52b47335d909ce61dd59058236ee057fe22e5ff240a25c776",
       "mode": "compute",
       "size": 10083609
     },
-    "ror2-dlc1_scenes_all_8ab06509b21ef64352cb8a62c76250bc.bundle": {
+    "ror2-dlc1_scenes_all_f3d0e7b9d01ac6de9b97cd1891fec640.bundle": {
       "input": "edd7aefc758ed50170cc71670538a1171a49bc7ebe535d62dc83996d3e88a418",
       "output": "7bbfa21c4d0a86c3f7414e5e6a50b703089b90cd8f7c1cc5afb822654c92f97f",
       "mode": "compute",
       "size": 13993458
     },
-    "ror2-dlc2-artifactworld01_scenes_all_cfec32e9e711ede18f08c457e339c9aa.bundle": {
+    "ror2-dlc2-artifactworld01_scenes_all_711f0cee0ed4535b9ab416bea19db555.bundle": {
       "input": "eba2fb8ff287284e849048605744e06a0a3b7fb3b86e78a42c7361afca1d52aa",
       "output": "5ded78fa2ff79dbcd79ae61b3ef2ec17beec05f3bd09e48d04e8b820f9fda617",
       "mode": "compute",
       "size": 2510024
     },
-    "ror2-dlc2-artifactworld02_scenes_all_006c77eb93df513acd2481f0049ead1e.bundle": {
-      "input": "0b5d583a5030c7625cafbb599194050d28867d21d2b8500272411984df17b9b3",
-      "output": "2675c089f5a83b0fb908e8848658d3bb996fdefd8862cfba40197911be3453d7",
+    "ror2-dlc2-artifactworld02_scenes_all_987e455f73727bba29d4b4eb5b877261.bundle": {
+      "input": "cd332923fd2fba74bd77edc796d22023a6131861b3e349e2b4ce83bbdaaf09de",
+      "output": "ea0d44f85d9a238c6af4acce2f49eae7d3ecf5fdc1c2b1728d26cf624ed854ab",
       "mode": "compute",
       "size": 2036231
     },
-    "ror2-dlc2-artifactworld03_scenes_all_5df0fef13fb7241bedb5dccd0c060dc9.bundle": {
+    "ror2-dlc2-artifactworld03_scenes_all_9e4a543d9ac151000650e06a82e14510.bundle": {
       "input": "14d2c34d849be26c126be9b9256182c19f33abe804eedd7ff866a7838b9944b5",
       "output": "c9c73bc5b275dce4b2e5de64fa19e25417aa612ca6135e958a473492b03d326c",
       "mode": "compute",
       "size": 2018919
     },
-    "ror2-dlc2-eventtrigger_static_assets_all_2358947f8ecaffa6de3b9ab40b59ac0e.bundle": {
+    "ror2-dlc2-eventtrigger_static_assets_all_9b76f354bbb8d29b2ab7c739eb13226e.bundle": {
       "input": "a7667f2b33483422d37ccc936d0aeb7fc4a123b21901473d945ec74d8b526bd7",
       "output": "0b58cf222c68345462a006017f0d3baa9b4077a9704a26d2697ba4fe436e008c",
       "mode": "compute",
       "size": 1712444
     },
-    "ror2-dlc2-habitat_scenes_all_487b6b3eb762d2adf49efbfdc7e7ca64.bundle": {
+    "ror2-dlc2-habitat_scenes_all_bf0e2675b14a51b9c4bbd430d991e059.bundle": {
       "input": "b868a8ba4f5065b608fa9ec9acdda15c98df7b55cbd50ae3af5f9966723e1a13",
       "output": "df79bd8d72ffa6c704abc19e505dacbbf5a5d891b0910e3f9bf1555fe8ea24a3",
       "mode": "compute",
       "size": 2323963
     },
-    "ror2-dlc2-habitatfall_scenes_all_edc371fe6e69dca12c5adef8e43dadd1.bundle": {
+    "ror2-dlc2-habitatfall_scenes_all_b1edb6f0be21c99f2e7365f5b114507d.bundle": {
       "input": "593bd032e3f83f91d42022802c9272a73c1cc40451c45a713be8495c1aa901ba",
       "output": "e414c5910ab0b0a6dcb0d5a03f7eb8b5a46c18e869a6d7f03e5b4e71789a7e07",
       "mode": "compute",
       "size": 2282816
     },
-    "ror2-dlc2-helminthroost_scenes_all_efb8d41b6bcf1ff3b136b4cd3017523c.bundle": {
+    "ror2-dlc2-helminthroost_scenes_all_29b550bdd49f45f3579f93d42e2d54ea.bundle": {
       "input": "ff70c6b10218b90bcc1c2f09609addb26b6836aad6c62508665ff56076445ba8",
       "output": "26e013d76ac01aedba27b4a137970336ecbf7f85bbaf6983a3923c25460b7b3d",
       "mode": "compute",
       "size": 1999496
     },
-    "ror2-dlc2-meridian_scenes_all_218bbc8d266b8dfe7affe697ff4c7f56.bundle": {
+    "ror2-dlc2-meridian_scenes_all_002ac39025e7fce23ab9fd09320a0f56.bundle": {
       "input": "513c9d881adc1c84744cf0b0f55dfe0d7735dfe4e0845c3b0aa038cc015453ef",
       "output": "fbc7f969f6d44005f0d7870b598d0a73e2bfa41d960673a7ccd3608f186c3288",
       "mode": "compute",
       "size": 2216520
     },
-    "ror2-dlc2-village_scenes_all_55d063f1f504ab6330738272bdef6585.bundle": {
-      "input": "eb9287d440f7cf4e48ee7fe3d43f01c0c5259570055b8c16883e245c9e6a2586",
-      "output": "55a43d8c120931c076c5381c00dbaffd0d950442bb81c837ff2a236865b19c37",
+    "ror2-dlc2-village_scenes_all_a1d8cc99be1dbf4cd75c0af39d6f3815.bundle": {
+      "input": "6961eac5a5ed165802e4cf79a0f041c93561e4acdac3769e747cb6d814efc164",
+      "output": "49bb24ae5582e255bdf8b0d6bf9bd20aa7d73bdbd443919db39e36e15c05bb94",
       "mode": "compute",
       "size": 2239878
     },
-    "ror2-dlc2-villagenight_scenes_all_18ceb5c311e4020d84601456ec0deb18.bundle": {
-      "input": "089a0641f74131b70ce88c3218f8b7dbb7b20b4d62bc775b49cf9382eca6263a",
-      "output": "30b4e46d79d54dae93975545ea7c47a64486dff67858d0b4a7d5cdedf09d604b",
+    "ror2-dlc2-villagenight_scenes_all_751f22d810d6c0b3ab3cc8ccc9889094.bundle": {
+      "input": "065e9745de408656910e331f0afe849900d03f05f8665ebb28812311bd0cb1cd",
+      "output": "792f1ffb4a634448f018bba87f34bf66594d579996271c24731f95a2f5ebce27",
       "mode": "compute",
       "size": 2085395
     },
-    "ror2-dlc3-computationalexchange_assets_all_3a8b18c2784e7cfc0a71e257a50a0494.bundle": {
+    "ror2-dlc3-computationalexchange_assets_all_d7c75045b0d1fb828b0f79027e40a312.bundle": {
       "input": "4b5ccba5c637e880fa8e945dc0d9b98dcfe1382b13442f1a8f6aeede8d09cfc8",
       "output": "593d1b34516217ee35574fec1cd7d670d8fe8b517a6fbb970d6ec511cce0426b",
       "mode": "compute",
       "size": 62071715
     },
-    "ror2-dlc3-solutionalhaunt_scenes_all_ee62d923857f1971a8c9dbeea57f38a5.bundle": {
-      "input": "72efa3c46a83baa12dd10d21f1ced89c39d15cfb59f72e082f4e7dfee8b9add4",
-      "output": "31475cb024fb687dc8153effb24508b68ce8ed00bb512a8a7f810996243c3eb3",
+    "ror2-dlc3-solutionalhaunt_scenes_all_c15dbea84a9fd908c83dfc47871607e4.bundle": {
+      "input": "e72f3ed7d72fd569965be0949f62d5e876334e8a76cf230fff683ee5b470b1a1",
+      "output": "3bed9685974dedbfc203396037e35f6abb9df135b98e3b15e5462e6049ac0bf7",
       "mode": "compute",
-      "size": 10821005
+      "size": 10820969
     },
-    "ror2-dlc4-artreview_scenes_all_7c72921fa4b0c1f6b8f2a8953a5e3dad.bundle": {
+    "ror2-dlc4-artreview_scenes_all_abd8a365e1e80cab9bac593fc6141924.bundle": {
       "input": "fffdb92a62f3818072d09c2d30be7b868a4d802235904355d10b8357427ac662",
       "output": "22d980b4c9a10f89c9a3e13bd896a48276fc1fd6a4f4316d6aa794d693824503",
       "mode": "compute",
       "size": 1831116
     },
-    "ror2-dlc4-champrush_scenes_all_003a4d5d693fc50d7aef463f86b6cc7d.bundle": {
-      "input": "f2f83241f027aef07a9c2b6bca748e02670cafe615d9d46421fd022d83d0156b",
-      "output": "20420c478ca1222d304a9acb67eb53e527714c6b0e77fe74887079df461c0af6",
+    "ror2-dlc4-champrush_scenes_all_7600f40d169838d20a8f2ee745874477.bundle": {
+      "input": "f1376e63cd83e0c5f258d5f72799a949e98636f1c7e9ea679fe3ca6d24f92832",
+      "output": "f166ecef553beb8429b1634d06d0074082ab6c52b2cd38ab87491b39ecc14307",
       "mode": "compute",
-      "size": 2911647
+      "size": 2911649
     },
-    "ror2-dlc4-fungal_scenes_all_2c803c119396ff836db100db8f29e12a.bundle": {
+    "ror2-dlc4-fungal_scenes_all_6429c4acc392068a4e723d20f156bbeb.bundle": {
       "input": "1781855cfa631699ed317d93ad3fe40dd82b1303935c2ceab47226b85e15fe46",
       "output": "a1df288006081555d30d36c84a0773507221fb72faa93326462d306488d4f1b7",
       "mode": "compute",
       "size": 4686474
     },
-    "ror2-dlc4-mire_scenes_all_ab8d80316ebcb10a7baebc0642dc9f46.bundle": {
+    "ror2-dlc4-mire_scenes_all_bb7c317b47df3d11a5fc208a630fb750.bundle": {
       "input": "0fe50b6ead77bb85b5d579be124f4cd38d3ed44f97a6bde1ca044d2fe492f5ee",
       "output": "d01c72af296613ee27edbdbc346ae61a2cc6f75a2f34c03bcc6c9577ba534361",
       "mode": "compute",
       "size": 4999014
     },
-    "ror2-dlc4-soul-soul1_scenes_all_eebb2e451a92b94884bbe1712ab93ab6.bundle": {
+    "ror2-dlc4-soul-soul1_scenes_all_7182ee82a15a26267d981102096567a5.bundle": {
       "input": "be1037731e953885b5493d22f59c6926cee0079d4738779354f45800b850fea5",
       "output": "49bde17ed55b87f8ccbb638102eea0c324f256600686e26c1f2efc26f079e301",
       "mode": "compute",
       "size": 41752742
     },
-    "ror2-dlc4-soul_perftest_scenes_all_c5646f096874ba7492c4fd26398075dc.bundle": {
+    "ror2-dlc4-soul_perftest_scenes_all_02f18243408946405fa0831d7496b421.bundle": {
       "input": "3a3c1bf08286003d4a86ec3971ede1f46cb4302c10563cfe306d131f3a341d4e",
       "output": "86f4a6592dcdd0410a97ba31285981f549041b1a94e2f75a879f414a426e33ef",
       "mode": "compute",
       "size": 6162568
     },
-    "ror2-dlc4-ultima_scenes_all_2874a7f79776a9c106b694e112b9d022.bundle": {
+    "ror2-dlc4-ultima_scenes_all_5bcee725f302f59a7c9501e6d28e0d80.bundle": {
       "input": "67696f08537b520bf7f8fcb71da4eb641cd1db7e6aedef5a98cbbe3523708e3e",
       "output": "1b3b574f5fdaba8209fc94c20212fcb9940144bde149ebb254f43554d0956f63",
       "mode": "compute",
       "size": 2582948
     },
-    "ror2-dlc4_assets_all_e70b3dc3ef8cad59f67a90c07b4e1f35.bundle": {
+    "ror2-dlc4_assets_all_87edefe3b0895919b90882c804aa0ebc.bundle": {
       "input": "8244fa011c55c33172db6846df282ccd9a52a41157ef66cf1384fbcd5fa92e1e",
       "output": "f5ef7dbe2503d75bb90eb3e5a6122610c729e47b09aea43fac6cdb1fde4ac9d0",
       "mode": "compute",
       "size": 73170823
     },
-    "ror2-junk-golemplains_trailer_scenes_all_3db4617787430df538f8b20c089352d8.bundle": {
+    "ror2-junk-golemplains_trailer_scenes_all_12ee1be1ff92cd84980b9dcef5790247.bundle": {
       "input": "4604821c68287205bfd8086b424836bee753b09d1c08f397b00527daca534e59",
       "output": "2fa1f1d46623c234dc81c9771a5dde7b42bf255171018dd02bb84b2e9fc737e8",
       "mode": "compute",
       "size": 6616071
     },
-    "ror2-junk-satellitescene_scenes_all_944a88c9bc303958bb119cf4dae35ea8.bundle": {
+    "ror2-junk-satellitescene_scenes_all_a5cf4ae8102d55b91462d3b4724c3ffa.bundle": {
       "input": "bc9e8dbefa623f405e86b23edad885ad36a9e7c56dbc20425a83662cdef7d182",
       "output": "c0cc810456e5c02f240cb1c6b444382c707766fb41b1666b82f863941b7c37d9",
       "mode": "compute",
       "size": 1711674
     },
-    "ror2-junk-space_scenes_all_d87efb05a258b3e1273222405800c63b.bundle": {
+    "ror2-junk-space_scenes_all_7e1d725c6eb0854ed7a1d7e87c535d3b.bundle": {
       "input": "6be67dfed52f116694400184d975aa45f2e79e8189fc2d4526c49116bd46fbf0",
       "output": "f4eb4557d43921555eca3c565c21d78b9d5fb2aa16e741da0c5e7811e9a1c7c7",
       "mode": "compute",
       "size": 1843474
     },
-    "ror2-testingscene_scenes_all_ac5571fccd628fc99bd7a68e720d8236.bundle": {
+    "ror2-testingscene_scenes_all_ae1abcb3a37f7a726d242ff2f981c9cb.bundle": {
       "input": "4f6d5e42bcc203b6b595d7700a062629e386c81fc10215fcd1566209117afc9f",
       "output": "a8410def835889a25b491eac45e06fb1011a46a867cfa7c17fd9d3f172b95770",
       "mode": "compute",

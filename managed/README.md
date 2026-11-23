@@ -14,6 +14,8 @@ The main builder rebuilds `AK.Wwise.Unity.API.dll` from the Windows assembly and
 
 ## Reuse prepared assemblies
 
+When a prepared kit comes from the October 8 Steam build, the builder regenerates `RoR2.dll`, `Assembly-CSharp.dll` and `KinematicCharacterController.dll` from the October 14 Windows files. Select Unity Editor 2023.1.0f1 to regenerate `Assembly-CSharp.dll`.
+
 To reuse compatible earlier outputs with `--private`, put prepared `private`, `storage` and `wwise` entries in `PRIVATE/managed/`. The `storage` entries are `RoR2.dll` and `ModLoader.dll` before the storage patch. Use the compatible baseline hash from the manifest. If you have an existing matching `.app` and backups of both pre-storage DLLs, the following command exports the managed inputs.
 
 ```bash

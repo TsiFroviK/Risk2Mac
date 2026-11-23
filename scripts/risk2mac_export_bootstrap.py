@@ -28,8 +28,8 @@ EXECUTABLE = "AssetRipper.GUI.Free"
 WINDOWS_DATA = "Risk of Rain 2_Data"
 WINDOWS_ROOT_FILES = ("Risk of Rain 2.exe", "UnityPlayer.dll")
 INPUTS = {
-    "globalgamemanagers": "292966bcba420ae931250b19633717684d0add5277abec3e9d3c4605cc5cd236",
-    "globalgamemanagers.assets": "82fb8e1e720300f289636d22aa2aea9d3c2871f4734fe81ca14e869a2b4b2b53",
+    "globalgamemanagers": "f2f9c607432e42db6385a11574528a7c9cafdcd190a9f5ef7e1fbd011f48f85a",
+    "globalgamemanagers.assets": "988453c04c5cae9d724a21012e818ff0317bcbde95076bc67f495df3c1fb8278",
     "Resources/unity_builtin_extra": "3437af0a10a2fa400cc88d8aacc147043c908da9cdcc515a46ad78b4a8b0c1a7",
 }
 SETTINGS = {

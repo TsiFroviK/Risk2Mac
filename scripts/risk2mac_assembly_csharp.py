@@ -13,10 +13,10 @@ from risk2mac_ai_navigation import find_ai_navigation_analyzer, response_path
 
 
 OUTPUT_NAME = "Assembly-CSharp.dll"
-INPUT_SHA256 = "ed84d52196945af9fcb5e987e5acec8f115ddacf339fa054c6c556531a245272"
-OUTPUT_SHA256 = "2d22027dbf5cfb2f862028c571752620ba53a96e7865426b036e4c9a0af89038"
+INPUT_SHA256 = "22bd24084b3f0d10658c737115b2866d9e717188ded6ef8e0375647cf9fe9091"
+OUTPUT_SHA256 = "2d6200b5c4a746d50dcc7a5ff4b5cc5d2c939f27fbd8d03275fc181c89094ebf"
 SOURCES_SHA256 = "f77de0f723e9fd376e890e62440bd8fe9c6e6e2c301fcec0681f73e22122c705"
-COMPILED_SHAPE_SHA256 = "6bde114fae5c37825d8ea4711c55160329e7d414b3f0e44056b58e54d97efd6e"
+COMPILED_SHAPE_SHA256 = "3f121711edc9926dd9de44c39a639ca137c2abe598fe57edf9e5b135cf8be008"
 
 ILSPY_VERSION = "9.1.0.7988"
 ILSPY_NAME = f"ilspycmd.{ILSPY_VERSION}.nupkg"
@@ -41,15 +41,15 @@ QUALIFY_NAMES = {
     "HealthBarTypeCheck.cs": ((b"private Event ", b"private AK.Wwise.Event "),),
     "AffixBeadProjectileSound.cs": ((b"private Event ", b"private AK.Wwise.Event "),),
 }
-# Keep the historical assembly identity and debug identifiers. Use a relative
-# CodeView path in place of the historical machine-specific absolute path.
+# Normalize the reviewed build's timestamp and debug identifiers so each Mac
+# produces the same assembly from the Steam inputs.
 BUILD_METADATA = {
-    0x88: bytes.fromhex("277de16a"),
-    0x1EF9C: bytes.fromhex("08f43f1831dfba40a22426788ae93783"),
-    0x21504: bytes.fromhex("fbc9cfd3"),
-    0x2153C: bytes.fromhex("b08c6abb50cc1944a686e79d1a24378a"),
-    0x21550: b".\\Library\\Bee\\artifacts\\200b0aP.dag\\Assembly-CSharp.pdb".ljust(260, b"\0"),
-    0x2165B: bytes.fromhex("b08c6abb50cc19b42686e79d1a24378afbc9cf53e9090d5300e35066489bba35"),
+    0x88: bytes.fromhex("366b046b"),
+    0x1EFB8: bytes.fromhex("1596de1653a05042a48700f1dca4025b"),
+    0x21520: bytes.fromhex("1800fba3"),
+    0x21558: bytes.fromhex("846d386a77d553498eabd1e99d73a714"),
+    0x2156C: b".\\Library\\Bee\\artifacts\\200b0aP.dag\\Assembly-CSharp.pdb".ljust(260, b"\0"),
+    0x21677: bytes.fromhex("846d386a77d553298eabd1e99d73a7141800fb23ade70f0bd76073107e42ad7c"),
 }
 
 
