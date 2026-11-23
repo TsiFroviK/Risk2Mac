@@ -86,6 +86,11 @@ def verify_all(jobs):
             pass
 
 
+def is_previous_shader(path, recipe):
+    previous = recipe.get("legacy_outputs", ()) if recipe else ()
+    return bool(previous and path.is_file() and sha256_file(path) in previous)
+
+
 def output_file(path: Path, row, *, source: Path | None = None, data: bytes | None = None):
     if path.exists() or path.is_symlink():
         check_file(path, row["sha256"], row["bytes"])
@@ -190,7 +195,7 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             local = within(private_data, relative)
             bundle = Path(relative).name
             recipe = shaders.get(bundle)
-            if recipe is not None and not local.is_file():
+            if recipe is not None and (not local.is_file() or is_previous_shader(local, recipe)):
                 if recipe["output"] != row["sha256"] or recipe["size"] != row["bytes"]:
                     raise ValueError(f"Shader conversion manifest disagrees with asset manifest: {relative}")
                 checks.append((within(data, relative), recipe["input"], None))
@@ -296,7 +301,16 @@ def export_private(source_app: Path, private: Path, include_banks: bool):
     kinds = {"private", "unity-startup", *EDITOR_ASSETS}
     if include_banks:
         kinds.add("bank")
-    rows = [row for row in load_manifest() if row["kind"] in kinds]
+    shaders = shader_recipes()
+    rows = []
+    for row in load_manifest():
+        if row["kind"] not in kinds:
+            continue
+        relative = row["path"]
+        if row["kind"] == "private" and is_previous_shader(within(source, relative), shaders.get(Path(relative).name)):
+            print(f"Skipping older {relative}; the builder regenerates it from the Windows installation.")
+            continue
+        rows.append(row)
     verify_all(
         (within(source, row["path"]), row["sha256"], row["bytes"])
         for row in rows

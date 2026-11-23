@@ -15,6 +15,7 @@ import tempfile
 
 import UnityPy
 
+from calm_water import restore_moon_water
 from shader_programs import apply_compute_donor, convert_shader, extract_shader, sha
 from special_shaders import guard_cloud_depth, pack_chromatic_parameters
 
@@ -54,14 +55,19 @@ def require_tool(path):
     return resolved
 
 
-def read_stock(stock, name, rule):
+def load_stock(stock, name, rule):
     path = stock / name
     if not path.is_file():
         raise ValueError(f"Missing supported Windows bundle: {path}")
     raw = path.read_bytes()
     if sha(raw) != rule["input"]:
         raise ValueError(f"Unsupported Windows SHA-256 for {name}")
-    return raw
+    env = UnityPy.load(raw)
+    if name == CALMWATER:
+        restore_moon_water(shader(env, "CalmWater/Calm Water [DX11]"), shader(env, "CalmWater/Calm Water [Single Sided]"))
+        # ObjectReader reads original bytes until the serialized file is reopened.
+        env = UnityPy.load(env.file.save(packer="none"))
+    return env
 
 
 def read_compute_donors(path):
@@ -87,8 +93,8 @@ def read_compute_donors(path):
 def extract(stock, names, manifest, dxbc):
     index = {}
     for name in names:
-        source = read_stock(stock, name, manifest[name])
-        for obj in UnityPy.load(source).objects:
+        source = load_stock(stock, name, manifest[name])
+        for obj in source.objects:
             if obj.type.name == "Shader":
                 key = sha(obj.get_raw_data())
                 if key not in index:
@@ -127,8 +133,7 @@ def translate(dxbc, metal, vkd3d, cross, jobs):
             raise
 
 
-def build_bundle(data, index, dxbc, metal, compute, cache):
-    env = UnityPy.load(data)
+def build_bundle(env, index, dxbc, metal, compute, cache):
     for obj in env.objects:
         if compute and obj.type.name == "ComputeShader":
             apply_compute_donor(obj, compute)
@@ -246,7 +251,7 @@ def build(args):
         for name in to_build:
             rule = manifest[name]
             env = build_bundle(
-                read_stock(stock, name, rule),
+                load_stock(stock, name, rule),
                 index,
                 dxbc,
                 metal,

@@ -489,9 +489,10 @@
     },
     "calmwater_shader_assets_all_65622a9b043e2722235b979d6f466b7f.bundle": {
       "input": "23f6556f85da7d69aba5e206bc46c7294844a703d08305df7d0a243eab143f47",
-      "output": "896a4b1ba85820a89f88bb1f31eeb12933c9fabc2b536f18b9be3c7baef9bf5c",
+      "output": "258898a40e859354df43a052517bafe22b37fad0f722baaadaa34df68c3a196c",
+      "legacy_outputs": ["896a4b1ba85820a89f88bb1f31eeb12933c9fabc2b536f18b9be3c7baef9bf5c"],
       "mode": "fallback",
-      "size": 261781
+      "size": 273138
     },
     "ror2-base-shaders_shader_assets_all_45ab8c24dd5dcd99e5cb60900de0231b.bundle": {
       "input": "bd1acda75caf15bcb9014dc14e7a0fc5680419e39d61cf24baca429509c12906",

@@ -6,8 +6,7 @@ using UnityEngine.Rendering;
 
 namespace RoR2Arm64
 {
-    // Candidate, not yet installed in the working port. Requires the matched
-    // Cloud shader with the explicit state guard and original-depth fallback.
+    // The matched cloud shader consumes this snapshot only during this camera's alpha pass.
     public sealed class MetalDepthCompatibility : MonoBehaviour
     {
         static readonly int SafeDepth = Shader.PropertyToID("_RoR2SafeDepth");
@@ -20,6 +19,7 @@ namespace RoR2Arm64
         }
         readonly Dictionary<Camera, CameraCommands> cameras = new Dictionary<Camera, CameraCommands>();
         readonly List<Camera> removed = new List<Camera>();
+        readonly HashSet<string> loggedFallbacks = new HashSet<string>();
         AssetBundle bundle;
         Material copyMaterial;
         bool subscribed;
@@ -59,16 +59,34 @@ namespace RoR2Arm64
             }
         }
 
-        static bool Supported(Camera camera)
+        static string FallbackReason(Camera camera)
         {
-            // Unverified target textures, offsets, actual resolution scaling, stereo
-            // and forward cameras use the unchanged original shader path.
-            if (!camera || !camera.isActiveAndEnabled || camera.cameraType != CameraType.Game || camera.stereoEnabled || camera.targetTexture) return false;
-            if (camera.allowDynamicResolution && (ScalableBufferManager.widthScaleFactor != 1f || ScalableBufferManager.heightScaleFactor != 1f)) return false;
-            if (camera.scaledPixelWidth != camera.pixelWidth || camera.scaledPixelHeight != camera.pixelHeight) return false;
-            if (camera.actualRenderingPath != RenderingPath.DeferredShading || (camera.depthTextureMode & DepthTextureMode.Depth) == 0) return false;
-            Rect rect = camera.pixelRect;
-            return rect.x == 0 && rect.y == 0 && camera.pixelWidth == Screen.width && camera.pixelHeight == Screen.height && camera.pixelWidth > 0 && camera.pixelHeight > 0;
+            if (!camera || !camera.isActiveAndEnabled || camera.cameraType != CameraType.Game) return "inactive or non-game camera";
+            if (camera.actualRenderingPath != RenderingPath.DeferredShading) return "rendering path";
+            if (camera.stereoEnabled) return "stereo camera";
+            if ((camera.depthTextureMode & DepthTextureMode.Depth) == 0) return "no depth texture";
+            if (camera.allowDynamicResolution && (ScalableBufferManager.widthScaleFactor != 1f || ScalableBufferManager.heightScaleFactor != 1f)) return "dynamic scaling";
+            if (camera.scaledPixelWidth != camera.pixelWidth || camera.scaledPixelHeight != camera.pixelHeight) return "scaled viewport";
+            Rect viewport = camera.rect;
+            if (viewport.x != 0 || viewport.y != 0 || viewport.width != 1 || viewport.height != 1) return "partial viewport";
+            if (camera.pixelWidth <= 0 || camera.pixelHeight <= 0) return "empty viewport";
+            var target = camera.targetTexture;
+            // A full-size offscreen camera has its own pixel space. Screen dimensions
+            // describe the display and can differ from the actual depth attachment.
+            if (target && (target.dimension != TextureDimension.Tex2D ||
+                target.antiAliasing != 1 || target.useDynamicScale ||
+                camera.pixelWidth != target.width || camera.pixelHeight != target.height)) return "offscreen layout";
+            return null;
+        }
+
+        static string Describe(Camera camera)
+        {
+            var target = camera.targetTexture;
+            return camera.name + " pixels=" + camera.pixelWidth + "x" + camera.pixelHeight +
+                " scaled=" + camera.scaledPixelWidth + "x" + camera.scaledPixelHeight +
+                " screen=" + Screen.width + "x" + Screen.height + " viewport=" + camera.rect +
+                " target=" + (target ? target.width + "x" + target.height + " AA=" + target.antiAliasing : "display " + camera.targetDisplay) +
+                " path=" + camera.actualRenderingPath + " depth=" + camera.depthTextureMode;
         }
 
         void BeforeCamera(Camera camera)
@@ -76,7 +94,15 @@ namespace RoR2Arm64
             // The guard must be off for every other camera, including cameras
             // that have never acquired our command buffers.
             Shader.SetGlobalVector(SafeState, Vector4.zero);
-            if (!copyMaterial || !Supported(camera)) { Remove(camera); return; }
+            var reason = FallbackReason(camera);
+            if (!copyMaterial || reason != null)
+            {
+                if (camera && camera.isActiveAndEnabled && camera.cameraType == CameraType.Game &&
+                    reason != null && loggedFallbacks.Add(reason))
+                    Debug.Log("ARM64_METAL_DEPTH_FALLBACK: " + reason + " " + Describe(camera));
+                Remove(camera);
+                return;
+            }
             CameraCommands existing;
             if (cameras.TryGetValue(camera, out existing))
             {
@@ -89,18 +115,20 @@ namespace RoR2Arm64
             {
                 entry.begin = new CommandBuffer { name = "RoR2 independent opaque depth" };
                 entry.end = new CommandBuffer { name = "RoR2 opaque depth release" };
+                int snapshot = Shader.PropertyToID("_RoR2OpaqueDepthCamera" + camera.GetInstanceID());
+                var texture = new RenderTargetIdentifier(snapshot);
                 entry.begin.SetGlobalVector(SafeState, Vector4.zero);
-                entry.begin.GetTemporaryRT(SafeDepth, entry.width, entry.height, 0, FilterMode.Point, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear, 1);
-                entry.begin.Blit(BuiltinRenderTextureType.None, new RenderTargetIdentifier(SafeDepth), copyMaterial, 0);
-                entry.begin.SetGlobalTexture(SafeDepth, new RenderTargetIdentifier(SafeDepth));
+                entry.begin.GetTemporaryRT(snapshot, entry.width, entry.height, 0, FilterMode.Point, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear, 1);
+                entry.begin.Blit(BuiltinRenderTextureType.None, texture, copyMaterial, 0);
+                entry.begin.SetGlobalTexture(SafeDepth, texture);
                 entry.begin.SetGlobalVector(SafeState, new Vector4(1, entry.width, entry.height, SystemInfo.usesReversedZBuffer ? 1 : -1));
                 entry.end.SetGlobalVector(SafeState, Vector4.zero);
                 entry.end.SetGlobalTexture(SafeDepth, Texture2D.blackTexture);
-                entry.end.ReleaseTemporaryRT(SafeDepth);
+                entry.end.ReleaseTemporaryRT(snapshot);
                 camera.AddCommandBuffer(CameraEvent.BeforeForwardAlpha, entry.begin); addedBegin = true;
                 camera.AddCommandBuffer(CameraEvent.AfterForwardAlpha, entry.end); addedEnd = true;
                 cameras.Add(camera, entry);
-                Debug.Log("ARM64_METAL_DEPTH_CAMERA: " + camera.name + " " + entry.width + "x" + entry.height);
+                Debug.Log("ARM64_METAL_DEPTH_CAMERA: " + Describe(camera));
             }
             catch (Exception error)
             {
@@ -128,7 +156,7 @@ namespace RoR2Arm64
         void LateUpdate()
         {
             removed.Clear();
-            foreach (var pair in cameras) if (!Supported(pair.Key)) removed.Add(pair.Key);
+            foreach (var pair in cameras) if (FallbackReason(pair.Key) != null) removed.Add(pair.Key);
             foreach (Camera camera in removed) Remove(camera);
         }
 
