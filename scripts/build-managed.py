@@ -268,7 +268,7 @@ def build_assemblies(windows, private, scratch, dotnet, recipe, compile_wwise, p
     if MEMORY_PROFILER in vendor_builds:
         references = {name: windows / name for name in MEMORY_PROFILER_REFERENCES}
         references["UnityEngine.CoreModule.dll"] = output / "UnityEngine.CoreModule.dll"
-        build_memory_profiler(dotnet, csc, references, output / MEMORY_PROFILER, scratch)
+        build_memory_profiler(dotnet, csc, references, output / MEMORY_PROFILER, scratch, editor)
 
     # Compile against the same Unity 2021 Windows reference assembly versions
     # used for the reviewed helpers. The app uses its supplied macOS Mono runtime.

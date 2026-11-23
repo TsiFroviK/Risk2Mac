@@ -7,7 +7,7 @@ import subprocess
 import tarfile
 import tempfile
 
-from risk2mac_unity import sha256
+from risk2mac_unity import sha256, verified_editor_package
 
 
 PACKAGE_NAME = "com.unity.memoryprofiler-1.0.0.tgz"
@@ -28,7 +28,7 @@ REFERENCE_SHA256 = {
 
 
 def build_memory_profiler(dotnet: str | Path, csc: Path, references: dict[str, Path],
-                          output: Path, scratch: Path) -> None:
+                          output: Path, scratch: Path, editor: Path | None = None) -> None:
     paths = []
     for name, expected in REFERENCE_SHA256.items():
         reference = references.get(name)
@@ -38,16 +38,7 @@ def build_memory_profiler(dotnet: str | Path, csc: Path, references: dict[str, P
 
     with tempfile.TemporaryDirectory(prefix="unity-memory-profiler-", dir=scratch) as directory:
         root = Path(directory)
-        package = root / PACKAGE_NAME
-        print("Downloading official Unity Memory Profiler 1.0.0 sources", flush=True)
-        subprocess.run([
-            "curl", "--fail", "--location", "--proto", "=https", "--proto-redir", "=https",
-            "--retry", "2", "--connect-timeout", "15", "--max-time", "90",
-            "--max-filesize", str(PACKAGE_SIZE), "--silent", "--show-error",
-            "--output", str(package), PACKAGE_URL,
-        ], check=True)
-        if package.stat().st_size != PACKAGE_SIZE or sha256(package) != PACKAGE_SHA256:
-            raise ValueError("Official Unity Memory Profiler package failed SHA-256 verification.")
+        package = verified_editor_package(editor, root, PACKAGE_URL, PACKAGE_SIZE, PACKAGE_SHA256)
         source = root / "MetadataInjector.cs"
         with tarfile.open(package, "r:gz") as archive:
             member = archive.getmember("package/Runtime/MetadataInjector.cs")

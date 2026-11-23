@@ -8,6 +8,8 @@ import subprocess
 import tarfile
 import tempfile
 
+from risk2mac_unity import verified_editor_package
+
 
 ARCHIVE_SHA256 = "edbc740b754d7f8e601dd90aa6ad569dc0a4301018e7c3ab2056f143c4ab9582"
 ARCHIVE_SIZE = 8663000
@@ -60,17 +62,7 @@ def response_path(path: Path) -> str:
     return f'"{path.as_posix()}"'
 
 
-def download_sources(root: Path, source_dir: Path) -> None:
-    archive = root / "com.unity.ai.navigation-1.1.3.tgz"
-    print("Downloading official Unity AI Navigation 1.1.3 sources", flush=True)
-    subprocess.run([
-        "curl", "--fail", "--location", "--proto", "=https", "--proto-redir", "=https",
-        "--retry", "2", "--connect-timeout", "15", "--max-time", "90",
-        "--max-filesize", str(ARCHIVE_SIZE), "--silent", "--show-error",
-        "--output", str(archive), ARCHIVE_URL,
-    ], check=True)
-    if archive.stat().st_size != ARCHIVE_SIZE or sha256(archive.read_bytes()) != ARCHIVE_SHA256:
-        raise ValueError("Official Unity AI Navigation package failed SHA-256 verification.")
+def extract_sources(archive: Path, root: Path, source_dir: Path) -> None:
     (root / source_dir).mkdir(parents=True)
     with tarfile.open(archive, "r:gz") as package:
         for name in SOURCE_NAMES:
@@ -131,7 +123,8 @@ def build_ai_navigation(dotnet: str | Path, csc: Path, editor: Path, references:
         intermediate = Path("Library/Bee/artifacts/200b0aP.dag")
         source_dir = Path("Library/PackageCache/com.unity.ai.navigation@1.1.3/Runtime")
         (root / intermediate).mkdir(parents=True)
-        download_sources(root, source_dir)
+        archive = verified_editor_package(editor, root, ARCHIVE_URL, ARCHIVE_SIZE, ARCHIVE_SHA256)
+        extract_sources(archive, root, source_dir)
         raw_dll = intermediate / OUTPUT_NAME
         ref_dll = intermediate / "Unity.AI.Navigation.ref.dll"
         additional_file = intermediate / "Unity.AI.Navigation.UnityAdditionalFile.txt"

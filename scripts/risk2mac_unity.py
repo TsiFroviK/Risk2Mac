@@ -62,6 +62,30 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def verified_editor_package(editor: Path | None, scratch: Path, url: str, size: int, digest: str) -> Path:
+    name = url.rsplit("/", 1)[1]
+    if editor is not None:
+        executable = editor.resolve()
+        contents = executable.parent / "Data" if executable.suffix.lower() == ".exe" else executable.parent.parent
+        bundled = contents / "Resources/PackageManager/Editor" / name
+        try:
+            if bundled.is_file() and bundled.stat().st_size == size and sha256(bundled) == digest:
+                print(f"Using {name} from the selected Unity Editor", flush=True)
+                return bundled
+        except OSError:
+            pass  # A missing or unreadable SDK copy can be downloaded below.
+    archive = scratch / name
+    print(f"Downloading official Unity package {name}", flush=True)
+    subprocess.run([
+        "curl", "--fail", "--location", "--proto", "=https", "--proto-redir", "=https",
+        "--retry", "2", "--connect-timeout", "15", "--max-time", "90",
+        "--max-filesize", str(size), "--silent", "--show-error", "--output", str(archive), url,
+    ], check=True)
+    if archive.stat().st_size != size or sha256(archive) != digest:
+        raise ValueError(f"Official Unity package failed SHA-256 verification: {name}")
+    return archive
+
+
 def managed_modules_match(managed: Path, manifest: Path) -> bool:
     """The Apple silicon Hub Editor can ship a different build of these same DLLs."""
     files = json.loads(manifest.read_text(encoding="utf-8"))["files"]
