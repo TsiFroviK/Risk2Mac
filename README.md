@@ -14,7 +14,7 @@ Steam mode uses the installed Steam client for game presence, cloud profiles and
 
 ## Performance
 
-Reported gameplay FPS on **Verdant Falls** with the settings below.
+Reported gameplay FPS on **Verdant Falls** with the settings below. These measurements predate the switch to direct Metal rendering on Apple Silicon in Builder 0.1.13.
 
 | Resolution | MacBook Air 2020 (M1, 8 GB) | MacBook Pro 16-inch (M5 Pro, 24 GB) |
 | --- | --- | --- |
@@ -131,4 +131,4 @@ The CLI also accepts `--private /path/to/inputs` if you already have compatible 
 
 Open the resulting `.app` in Finder. On startup, the app writes Unity and launcher logs to `~/Library/Logs/Risk Of Rain 2/`. The `Latest-Unity.log` and `Latest-Launcher.log` links point to the latest run. Configuration, mod lists, run reports and generated caches use `~/Library/Application Support/com.Hopoo-Games--LLC.Risk-of-Rain-2/ARM64Solo/Runtime/`.
 
-If loading repeatedly stops after shader compilation, try the [single-threaded launch option](docs/steam.md#if-loading-stops-before-the-menu).
+If an earlier Apple Silicon build crashes in combat or hangs after shader compilation, add `-force-gfx-direct` to its launch options. Rebuilding with Builder 0.1.13 or later enables this mode automatically. [Steam and Finder instructions](docs/steam.md#if-loading-stops-before-the-menu)

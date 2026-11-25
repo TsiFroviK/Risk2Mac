@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import platform
 import shutil
 import subprocess
 import sys
@@ -167,7 +168,8 @@ def normalize_catalog(source: Path) -> bytes:
 
 def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | None,
                    check_only: bool, tool_cache: Path | None = None, unity_editor: Path | None = None,
-                   dotnet: str | None = None):
+                   dotnet: str | None = None, arch: str | None = None):
+    arch = arch or platform.machine()
     data = game if game.name == "Risk of Rain 2_Data" else game / "Risk of Rain 2_Data"
     private_data = within(private, Path("assets") / DATA)
     rows = load_manifest()
@@ -229,7 +231,11 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
             continue
         if kind == "startup" and within(private_data, relative).is_file():
             # Earlier recipes accepted Windows input sets without startup metadata.
-            checks.append((within(private_data, relative), row["sha256"], row["bytes"]))
+            local = within(private_data, relative)
+            expected = row
+            if relative == "boot.config" and sha256_file(local) == row["arm64"]["sha256"]:
+                expected = row["arm64"]
+            checks.append((local, expected["sha256"], expected["bytes"]))
             prepared_startup.add(relative)
             continue
         if kind == "private":
@@ -297,8 +303,14 @@ def prepare_assets(game: Path, app: Path | None, private: Path, wwiser: Path | N
                 output_file(target, row, data=normalize_catalog(source))
             elif kind == "line-endings":
                 output_file(target, row, data=source.read_bytes().replace(b"\r\n", b"\n"))
+            elif relative == "boot.config":
+                # A prepared kit may have come from the other architecture or an
+                # older builder. Regenerate the verified config for this player.
+                if relative in prepared_startup:
+                    source = within(private_data, relative)
+                output_file(target, row.get(arch, row), data=transform_startup(relative, source, arch))
             elif kind == "startup" and relative not in prepared_startup:
-                output_file(target, row, data=transform_startup(relative, source))
+                output_file(target, row, data=transform_startup(relative, source, arch))
             elif relative in missing_editor_assets and kind == "unity-textures":
                 python = prepare_asset_python(stage, cache)
                 stream = within(stage, relative)
@@ -375,6 +387,7 @@ def main():
     operation.add_argument("--game", type=Path, help="Exact Windows game installation")
     operation.add_argument("--export-private", type=Path, metavar="APP", help="Existing reviewed port .app")
     parser.add_argument("--app", type=Path, help="Staged macOS .app output")
+    parser.add_argument("--arch", choices=("arm64", "x86_64"), help="Target player architecture (defaults to this machine)")
     parser.add_argument("--private", required=True, type=Path, help="Private inputs directory")
     parser.add_argument("--wwiser", type=Path, help="Optional pinned local wwiser Git checkout")
     parser.add_argument("--tools", type=Path, help="Fetch and cache the pinned upstream wwiser if converted banks are missing")
@@ -384,7 +397,7 @@ def main():
     parser.add_argument("--include-banks", action="store_true", help="Export the 247 converted audio banks too")
     args = parser.parse_args()
     if args.export_private:
-        if args.app or args.wwiser or args.tools or args.unity_editor or args.dotnet or args.check:
+        if args.app or args.wwiser or args.tools or args.unity_editor or args.dotnet or args.arch or args.check:
             parser.error("--export-private only accepts --private and --include-banks")
         export_private(args.export_private, args.private, args.include_banks)
         return
@@ -396,7 +409,7 @@ def main():
         for source in (args.game, args.private):
             if args.app.resolve().is_relative_to(source.resolve()) or source.resolve().is_relative_to(args.app.resolve()):
                 parser.error("--app and its input directories must be separate")
-    prepare_assets(args.game, args.app, args.private, args.wwiser, args.check, args.tools, args.unity_editor, args.dotnet)
+    prepare_assets(args.game, args.app, args.private, args.wwiser, args.check, args.tools, args.unity_editor, args.dotnet, args.arch)
 
 
 if __name__ == "__main__":

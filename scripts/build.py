@@ -285,7 +285,7 @@ def main():
         extra = ["--wwiser", str(options.wwiser.expanduser().resolve())] if options.wwiser else []
         if editor:
             extra.extend(("--unity-editor", str(editor)))
-        subprocess.run([sys.executable, str(ROOT / "scripts/build-assets.py"), *common, "--dotnet", dotnet,
+        subprocess.run([sys.executable, str(ROOT / "scripts/build-assets.py"), *common, "--arch", arch, "--dotnet", dotnet,
                         "--tools", str(cache), *extra],
                        check=True, env=environment)
         print("[4/4] App bundle and signature", flush=True)

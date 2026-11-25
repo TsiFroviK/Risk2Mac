@@ -80,22 +80,25 @@ def runtime_initializers(raw: bytes) -> bytes:
     return (json.dumps(document, separators=(",", ":"), ensure_ascii=False) + "\r\n").encode("utf-8")
 
 
-def boot_configuration(raw: bytes) -> bytes:
+def boot_configuration(raw: bytes, arch: str) -> bytes:
     settings = dict(row.split("=", 1) for row in raw.decode("ascii").splitlines())
+    # Both arm64 crash reports put BufferMetal::EndWrite on GfxDeviceWorker
+    # at the end of a frame. Direct mode removes that render worker.
+    rendering = "force-gfx-direct=1" if arch == "arm64" else "gfx-threading-mode=4"
     return (
-        "gfx-threading-mode=4\n"
+        f"{rendering}\n"
         f"wait-for-native-debugger={settings['wait-for-native-debugger']}\n"
         f"hdr-display-enabled={settings['hdr-display-enabled']}\n"
         f"build-guid={MAC_BUILD_GUID}\n"
     ).encode("ascii")
 
 
-def transform_startup(name: str, source: Path) -> bytes:
+def transform_startup(name: str, source: Path, arch: str) -> bytes:
     """Transform one Windows file already verified against the asset manifest."""
     if name == "RuntimeInitializeOnLoads.json":
         return runtime_initializers(source.read_bytes())
     if name == "ScriptingAssemblies.json":
         return scripting_assemblies(source.read_bytes())
     if name == "boot.config":
-        return boot_configuration(source.read_bytes())
+        return boot_configuration(source.read_bytes(), arch)
     raise ValueError(f"Unsupported Unity startup file: {name}")

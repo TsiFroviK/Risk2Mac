@@ -58,13 +58,15 @@ Automatic fallback was also tested with Steam fully closed. The existing local p
 
 ## If loading stops before the menu
 
-If the game repeatedly hangs after shader loading, quit it and try Unity's single-threaded rendering mode. In Steam, open **Properties → Shortcut → Launch Options** for **Risk of Rain 2 (Risk2Mac)** and add `-force-gfx-direct`. For a standalone copy, run the following in Terminal using the actual path to the app.
+Builder 0.1.13 enables Unity's direct rendering mode in games built for Apple Silicon. It avoids the Metal render worker that crashed while finishing geometry buffers in two M1 Pro combat sessions. The setting also applies when a launcher starts the Unity player directly. [Crash reports](https://github.com/TsiFroviK/Risk2Mac/issues/4)
+
+To enable the same mode in an existing build after a combat crash or a repeated hang during shader loading, quit the game. In Steam, open **Properties → Shortcut → Launch Options** for **Risk of Rain 2 (Risk2Mac)** and add `-force-gfx-direct`. For a standalone copy, run the following in Terminal using the actual path to the app.
 
 ```bash
 open "/Applications/Risk of Rain 2.app" --args -force-gfx-direct
 ```
 
-This also works with existing builds. For a one-off launch of a Steam-integrated copy, use its full path in the same command and leave Steam running. Remove the Steam launch option or open the standalone app normally to return to the default renderer. Frame rates can differ between modes.
+For a one-off launch of a Steam-integrated copy, use its full path in the same command and leave Steam running. On older builds, clearing the Steam launch option or opening the app normally restores the previous mode. Frame rates can differ between modes.
 
 In two sampled M1 stalls, Unity's main thread waited for the graphics worker while creating a shader program, and the worker waited for another command. Single-threaded rendering avoids that dependency. A local M1 test reached the menu in this mode even though the log still contained `Desired shader compiler platform 14 is not available in shader blob`. That message alone does not identify a hang. The M2 Pro report has no thread sample yet. For a persistent stall, use Activity Monitor to sample the running game before quitting and include the sample with that run's logs. [Unity player launch options](https://docs.unity3d.com/2023.1/Documentation/Manual/PlayerCommandLineArguments.html)
 

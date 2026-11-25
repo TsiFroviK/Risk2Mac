@@ -2494,7 +2494,7 @@
 {"path":"StreamingAssets/desc.txt","sha256":"e38b465a91fce04051dea7b2f5f50f839f306ca4f69af6612e3f03d8d96acd83","bytes":238,"kind":"copy"},
 {"path":"StreamingAssets/lrapi_returns.json","sha256":"aa2de5aa7dc067a056120ab9eaa16c9a89f4cddf58213ec080a2ea4042d2a91f","bytes":20259361,"kind":"copy"},
 {"path":"app.info","sha256":"4a3cc9c2658f63f34b40b3123ed7299ce90b2ffb1d99c0e50c97af4d5f111728","bytes":31,"kind":"copy"},
-{"path":"boot.config","sha256":"1b4087b61cf5890d125b1fc583db5371020e97d9b63d48b49aba0a392551677d","bytes":114,"kind":"startup","input_sha256":"25202c8f0caa8139d220c1db829ac0445de52047059b03c920c7d145ddfeb4ba"},
+{"path":"boot.config","sha256":"1b4087b61cf5890d125b1fc583db5371020e97d9b63d48b49aba0a392551677d","bytes":114,"kind":"startup","input_sha256":"25202c8f0caa8139d220c1db829ac0445de52047059b03c920c7d145ddfeb4ba","arm64":{"sha256":"d93d0709c675edbc8f2bcd84faa7ad2d3aced468cbf8d600b89441e5ce6775ce","bytes":112}},
 {"path":"globalgamemanagers","sha256":"609e22ac73312b1f92a926ae15a33587f0952372dbcddbbc44139ce1d1c584df","bytes":252388,"kind":"unity-startup"},
 {"path":"globalgamemanagers.assets","sha256":"0fbf22fd6d3655e3e5cc614d32f8420f659084e48087388599130abcd63bdf0e","bytes":310084,"kind":"unity-startup"},
 {"path":"globalgamemanagers.assets.resS","sha256":"39dd38fcd8dd95d41d6d55fe16a448d29fe2c31d9a162c825c24c6d99a893d7a","bytes":2796240,"kind":"unity-splash"},
